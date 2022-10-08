@@ -206,15 +206,26 @@ async function render_leaderboard(page_num) {
 async function render_user(user_id, page_num) {
   const json = await get('/api/user/' + user_id);
   document.title = `${json.username} - o!RL`;
-
   const template = document.querySelector('#user-template').content.cloneNode(true);
   template.querySelector('.heading-left img').src = `https://s.ppy.sh/a/${json.user_id}`;
   template.querySelector('.heading-right h1').innerText = json.username;
   template.querySelector('.heading-right .subheading').href = `https://osu.ppy.sh/users/${json.user_id}`;
-
   const blocks = template.querySelectorAll('.user-focus-block');
-  if (json.is_ranked) {
-    blocks[0].innerHTML = `<span>${json.rank.text}</span><span>Rank #${json.rank.rank_nb}</span>`;
+  if (json.is_ranked && json.rank.text.includes('+')) {
+    json.rank.text = json.rank.text.replaceAll('+', '<span style=\'color:white;font-size:1em\'>+</span>');
+    blocks[0].innerHTML = `<span style="color: ${json.rank.rank_cr}">${json.rank.text}</span><span>Rank #${json.rank.rank_nb}</span>`;
+    blocks[1].innerHTML = `<span>${json.games_played}</span><span>Games Played</span>`;
+    blocks[2].innerHTML = `<span>${json.elo}</span><span>Elo</span>`;
+  } else if (json.rank.text == 'Legendary') {
+    blocks[0].innerHTML = `<span style="background: -webkit-linear-gradient(#c14790, #8c92bd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: normal;">${json.rank.text}</span><span>Rank #${json.rank.rank_nb}</span>`;
+    blocks[1].innerHTML = `<span>${json.games_played}</span><span>Games Played</span>`;
+    blocks[2].innerHTML = `<span>${json.elo}</span><span>Elo</span>`;
+  } else if (json.rank.text == 'The One') {
+    blocks[0].innerHTML = `<span style="background: -webkit-linear-gradient(#ff0070, #f98c8c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: normal;">${json.rank.text}</span><span>Rank #${json.rank.rank_nb}</span>`;
+    blocks[1].innerHTML = `<span>${json.games_played}</span><span>Games Played</span>`;
+    blocks[2].innerHTML = `<span>${json.elo}</span><span>Elo</span>`;
+  } else if (json.is_ranked) {
+    blocks[0].innerHTML = `<span style="color: ${json.rank.rank_cr}">${json.rank.text}</span><span>Rank #${json.rank.rank_nb}</span>`;
     blocks[1].innerHTML = `<span>${json.games_played}</span><span>Games Played</span>`;
     blocks[2].innerHTML = `<span>${json.elo}</span><span>Elo</span>`;
   } else {

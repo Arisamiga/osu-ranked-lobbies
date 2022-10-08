@@ -67,6 +67,29 @@ const RANK_DIVISIONS = [
   'Legendary',
 ];
 
+const RANK_DIVISIONS_COLORS = [
+  '#ad8762',
+  '#966F33',
+  '#966F33',
+  '#966F33',
+  '#CD7F32',
+  '#CD7F32',
+  '#CD7F32',
+  '#C0C0C0',
+  '#C0C0C0',
+  '#C0C0C0',
+  '#FFD700',
+  '#FFD700',
+  '#FFD700',
+  '#E5E4E2',
+  '#E5E4E2',
+  '#E5E4E2',
+  '#b9f2ff',
+  '#b9f2ff',
+  '#b9f2ff',
+  '#ff1a1a;',
+];
+
 
 function get_new_deviation(player, contest_tms) {
   if (player.last_contest_tms == 0 || isNaN(player.last_contest_tms)) return 350.0;
@@ -308,6 +331,30 @@ function update_mmr(lobby, contest_tms) {
   return rank_changes;
 }
 
+function get_rank_color(rank_float) {
+  if (rank_float == null || typeof rank_float === 'undefined') {
+    return 'Unranked';
+  }
+  if (rank_float == 1.0) {
+    return 'The One';
+  }
+
+  // Epic rank distribution algorithm
+  for (let i = 0; i < RANK_DIVISIONS_COLORS.length; i++) {
+    // Turn current 'Cardboard' rank into a value between 0 and 1
+    const rank_nb = (i + 1) / RANK_DIVISIONS_COLORS.length;
+
+    // To make climbing ranks more satisfying, we make lower ranks more common.
+    // Visual representation: https://graphtoy.com/?f1(x,t)=1-((cos(x%5E0.8*%F0%9D%9C%8B)/2)+0.5)&v1=true&f2(x,t)=&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=true&coords=0.3918011117299855,0.3722110561434862,1.0068654346588846
+    const cutoff = 1 - ((Math.cos(Math.pow(rank_nb, 0.8) * Math.PI) / 2) + 0.5);
+    if (rank_float < cutoff) {
+      return RANK_DIVISIONS_COLORS[i];
+    }
+  }
+
+  // Ok, floating point errors, who cares
+  return RANK_DIVISIONS_COLORS[RANK_DIVISIONS_COLORS.length - 1];
+}
 
 function get_rank_text(rank_float) {
   if (rank_float == null || typeof rank_float === 'undefined') {
@@ -346,6 +393,7 @@ function get_rank(elo) {
     total_nb: all_users.nb,
     rank_nb: better_users.nb + 1,
     text: get_rank_text(ratio),
+    rank_cr: get_rank_color(ratio),
   };
 }
 
