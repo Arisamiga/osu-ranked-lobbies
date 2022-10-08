@@ -246,7 +246,6 @@ async function render_user(user_id, page_num) {
 
 
 async function route(new_url) {
-  
   if (document.location.pathname == '/osu_login') {
     document.location = '/osu_login';
     location.reload();
