@@ -32,7 +32,6 @@ function click_listener(evt) {
   if (this.tagName == 'A') {
     if (this.host == location.host && this.target != '_blank') {
       evt.preventDefault();
-
       console.log('Loading ' + this.href);
       window.history.pushState({}, 'osu! ranked lobbies', this.href);
       document.querySelector('main').innerHTML = '';
@@ -247,7 +246,8 @@ async function render_user(user_id, page_num) {
 
 
 async function route(new_url) {
-  if (new_url == '/osu_login') {
+  
+  if (document.location.pathname == '/osu_login') {
     document.location = '/osu_login';
     location.reload();
     return;
