@@ -182,6 +182,9 @@ async function render_leaderboard(ruleset, page_num) {
 
   const template = document.querySelector('#leaderboard-template').content.cloneNode(true);
   template.querySelector('.nb-ranked').innerText = `${json.nb_ranked_players} ranked players`;
+  template.querySelectorAll(`[ruleset^='${ruleset}']`).forEach((div) => {
+    div.style.filter = 'opacity(0.5)';
+  });
 
   if (json.the_one) {
     template.querySelector('.leaderboard-focus').innerHTML += `
@@ -233,6 +236,12 @@ async function render_user(user_id, ruleset, page_num) {
   template.querySelector('.heading-left img').src = `https://s.ppy.sh/a/${json.user_id}`;
   template.querySelector('.heading-right h1').innerText = json.username;
   template.querySelector('.heading-right .subheading').href = `https://osu.ppy.sh/users/${json.user_id}`;
+  template.querySelectorAll('.user-modes a').forEach((div) => {
+    div.href = `/u/${json.user_id}/${div.querySelector('img').getAttribute('ruleset')}`;
+  });
+  template.querySelectorAll(`[ruleset^='${ruleset}']`).forEach((div) => {
+    div.style.filter = 'opacity(0.5)';
+  });
 
   const blocks = template.querySelectorAll('.user-focus-block');
   if (json.ranks[mode].rank_nb >= 5) {
