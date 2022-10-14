@@ -937,3 +937,17 @@ li {
 .go-to-create-lobby {
     margin: 15px 5px;
 }
+.user-modes {
+    margin-left: 20px;
+}
+.user-modes a {
+    text-decoration: none;
+    text-decoration-color: transparent;
+}
+.modes a {
+    text-decoration: none;
+    text-decoration-color: transparent;
+}
+.modes img , .user-modes a img  {
+    width: 45px;
+}
