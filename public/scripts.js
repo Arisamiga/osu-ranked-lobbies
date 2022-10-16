@@ -379,7 +379,7 @@ async function route(new_url) {
     const page_num = m[3] || 1;
     document.querySelector('main').innerHTML = '';
     await render_user(user_id, ruleset, page_num);
-  } else if (m = new_url.match(/faq/)) {
+  } else if (m = new_url.match(/\/faq\//)) {
     document.querySelector('main').innerHTML = '';
     await render_faq();
   } else if (m = new_url.match(/\/u\/(\d+)\/(.+)\/?/)) {
