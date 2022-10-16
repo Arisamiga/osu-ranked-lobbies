@@ -146,6 +146,12 @@ function render_lobby(lobby) {
   return lobby_div;
 }
 
+async function render_faq() {
+  document.title = 'FAQ - o!RL';
+  const template = document.querySelector('#FAQ-template').content.cloneNode(true);
+  document.querySelector('main').appendChild(template);
+}
+
 async function render_lobbies() {
   document.title = 'Lobbies - o!RL';
   const json = await get('/api/lobbies/');
@@ -393,6 +399,9 @@ async function route(new_url) {
     const page_num = m[3] || 1;
     document.querySelector('main').innerHTML = '';
     await render_user(user_id, ruleset, page_num);
+  } else if (m = new_url.match(/faq/)) {
+    document.querySelector('main').innerHTML = '';
+    await render_faq();
   } else if (m = new_url.match(/\/u\/(\d+)\/(.+)\/?/)) {
     const user_id = m[1];
     const ruleset = m[2];

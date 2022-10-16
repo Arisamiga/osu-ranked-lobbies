@@ -56,6 +56,86 @@
       <noscript>Sorry, but to reduce server load, pages are rendered client-side, with JavaScript :(</noscript>
     </main>
 
+    <template id="FAQ-template">
+      <h1>FAQ</h1>
+      <div class="Faq-info">
+      <h3>Commands for ranked lobbies</h3>
+      <ul>
+        <li>
+          !info or !discord - Display some information for new players.
+          </li>
+          <li>
+            !start -  Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
+            </li>
+            <li>
+              !wait - Cancel !start. Use it when you're not done downloading.
+            </li>
+            <li>
+              !skip - Skip current map. You must have played 5 games in the lobby to unlock the command.
+            </li>
+            <li>
+              !abort - Vote to abort the match. At least 1/4 of the lobby must vote to abort for a match to get aborted.
+            </li>
+            <li>
+              !ban (player) - Vote to ban a player. You should probably use the in-game ignoring and reporting features instead.
+            </li>
+            <li>
+              !rank (player) - Display your rank or the rank of another player.
+            </li>
+      </ul>
+      <h3>Commands for unranked lobbies</h3>
+      <ul>
+        <li>
+          !collection (id) -  Switches to another collection. Only the lobby creator can use this command.
+        </li>
+        <li>
+          !start - Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
+        </li>
+        <li>
+          !wait - Cancel !start. Use it when you're not done downloading.
+        </li>
+        <li>
+          !abort - Vote to abort the match. At least half the players in the lobby must vote to abort for a match to get aborted.
+        </li>
+        <li>
+          !skip - Vote to skip the current map. At least half the players in the lobby must vote to skip for a map to get skipped.
+        </li>
+      </ul>
+      <br>
+      <h2>Frequently Asked Questions</h2>
+      <br>
+      <h3>When do I get a rank?</h3>
+        You get a rank after playing 5 games in a ranked lobby. To have it visible in this Discord server, you need to link your account in welcome.
+      <h3>How do the ranks work?</h3>
+        When you pass a map with 95% accuracy, you gain rank. When you don't, you lose rank. How much you gain or lose depends on your rank, as well as how hard the map is.
+      <h3>Will mods make me rank up faster?</h3>
+        No. Using difficulty-reducing mods will invalidate your score; only HD, HR, MR, SD/PF, FI/FL are allowed.
+      <h3>How are the maps chosen?</h3>
+        Maps are picked to best fit your current skill level.
+      <h3> What's the map pool?</h3>
+        Initially, the map pool consists of collections from map-pool. Over time, it expands to cover the entirety of osu! maps with a leaderboard (about 130k maps).
+      <h3>Why is the star rating different from the title of the lobby?</h3>
+        Some maps are much easier/harder than their star rating represents. Also, the star rating shown by the client in multi lobbies is different from the current one (as shown on the osu! website).
+      <h3>What are the ranks?</h3>
+      <h4>Here is the rank distribution:</h4>
+      <ul class="Faq-Ranks">
+        <li> Cardboard: Bottom 8.6% </li>
+        <li> Wood: Top 91.3%</li>
+        <li> Bronze: Top 75.5%</li>
+        <li> Silver: Top 56.8%</li>
+        <li> Gold: Top 38.3%</li>
+        <li> Platinum: Top 22.3%</li>
+        <li> Diamond: Top 10.1%</li>
+        <li> Rhythm Incarnate: Top 2.5%</li>
+        <li> The One: #1</li>
+      </ul>
+      <h3>Why isn't the game starting when all players are ready?</h3>
+        That happens the last person that wasn't ready leaves. Anyone can unready and re-ready to start the game immediately. (I can't fix this bug, it comes from BanchoBot itself.)'
+      <h3>Can I see the source code?</h3>
+        Yes: <a href="https://github.com/kiwec/osu-ranked-lobbies">https://github.com/kiwec/osu-ranked-lobbies</a>
+      </div>
+    </template>
+
     <template id="lobbies-template">
       <h1>Lobbies</h1>
       <div class="lobby-creation-banner">
