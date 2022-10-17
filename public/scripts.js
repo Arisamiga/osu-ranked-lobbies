@@ -126,13 +126,9 @@ function render_lobby(lobby) {
   const lobby_div = document.createElement('div');
   lobby_div.classList.add('lobby');
 
-  let type = 'Custom';
-  if (lobby.mode == 'ranked') {
-    if (lobby.scorev2) {
-      type = 'Ranked (ScoreV2)';
-    } else {
-      type = 'Ranked (ScoreV1)';
-    }
+  let stars = 'Dynamic';
+  if (lobby.fixed_stars) {
+    stars = `${lobby.min_stars.toFixed(1)}-${lobby.max_stars.toFixed(1)}*`;
   }
 
   const color = stars_to_color(lobby.map ? lobby.map.stars : 0);
@@ -140,7 +136,7 @@ function render_lobby(lobby) {
   lobby_div.innerHTML += `
     <div class="lobby-info">
       <div class="lobby-title"></div>
-      <div>${type} · ${lobby.nb_players}/16 players</div>
+      <div>${stars} · ${lobby.nb_players}/16 players</div>
       <div class="lobby-creator">Created by <a href="/u/${lobby.creator_id}"><img src="https://s.ppy.sh/a/${lobby.creator_id}" alt="Lobby creator"> ${lobby.creator_name}</a></div>
     </div>
     <div class="lobby-links" style="background-color:${color}">
@@ -464,6 +460,8 @@ if (searchField) {
 }
 
 document.addEventListener('keydown', (event) => {
+  if (!document.querySelector('.search-button').classList.contains('active')) return;
+
   if (event.key === 'Enter') {
     const activeItem = document.querySelector('.search-result-item.active');
     if (activeItem) {

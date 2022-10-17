@@ -9,6 +9,36 @@ import Config from './util/config.js';
 
 // TODO: !good / !bad map rating commands
 
+async function stars_command(msg, match, lobby) {
+  const args = msg.message.split(' ');
+
+  // No arguments: remove star rating restrictions
+  if (args.length == 1) {
+    lobby.data.min_stars = 3.0;
+    lobby.data.max_stars = 11.0;
+    lobby.data.fixed_star_range = false;
+    await lobby.select_next_map();
+    return;
+  }
+
+  if (args.length < 3) {
+    await lobby.send(msg.from + ': You need to specify minimum and maximum star values.');
+    return;
+  }
+
+  const min_stars = parseFloat(args[1]);
+  const max_stars = parseFloat(args[2]);
+  if (isNaN(min_stars) || isNaN(max_stars) || min_stars >= max_stars || min_stars < 0 || max_stars > 99) {
+    await lobby.send(msg.from + ': Please use valid star values.');
+    return;
+  }
+
+  lobby.data.min_stars = min_stars;
+  lobby.data.max_stars = max_stars;
+  lobby.data.fixed_star_range = true;
+  await lobby.select_next_map();
+}
+
 async function reply(user, lobby, message) {
   if (lobby) {
     await lobby.send(`${user}: ${message}`);
@@ -338,6 +368,18 @@ const commands = [
     handler: skip_command,
     creator_only: false,
     modes: ['collection', 'ranked'],
+  },
+  {
+    regex: /^!stars/gi,
+    handler: stars_command,
+    creator_only: true,
+    modes: ['ranked'],
+  },
+  {
+    regex: /^!setstar/gi,
+    handler: stars_command,
+    creator_only: true,
+    modes: ['ranked'],
   },
 ];
 

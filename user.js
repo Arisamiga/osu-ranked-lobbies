@@ -82,6 +82,14 @@ function populate_ratings(user) {
     user.catch_rating,
     user.mania_rating,
   ];
+
+  const data = JSON.parse(user.profile_data);
+  user.pps = [
+    (data.statistics_rulesets?.osu?.pp || 0) / 20,
+    (data.statistics_rulesets?.taiko?.pp || 0) / 20,
+    (data.statistics_rulesets?.fruits?.pp || 0) / 20,
+    (data.statistics_rulesets?.mania?.pp || 0) / 20,
+  ];
 }
 
 
