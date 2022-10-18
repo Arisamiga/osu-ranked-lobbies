@@ -12,8 +12,8 @@ async function set_new_title(lobby) {
   const gamemodes = ['std', 'taiko', 'catch', 'mania 4k'];
   const ruleset = gamemodes[lobby.data.ruleset];
 
-  if (lobby.players.length > 0) {
-    new_title = `${lobby.map.stars.toFixed(1)}* | o!RL ${ruleset} (!info)`;
+  if (lobby.avg_stars) {
+    new_title = `${lobby.avg_stars.toFixed(1)}* | o!RL ${ruleset} (!info)`;
   } else {
     new_title = `o!RL ${ruleset} (!info)`;
   }
@@ -29,20 +29,38 @@ async function set_new_title(lobby) {
 }
 
 function update_median_mu(lobby) {
-  let total = 0;
-  let factor = 0;
-  for (const player of lobby.players) {
-    const rating = player.ratings[lobby.data.ruleset];
-    const sig_diff = (351 / 173.7178 - rating.current_sig);
-    factor += sig_diff;
-    total += rating.current_mu * sig_diff;
+  if (lobby.players.length == 0) {
+    lobby.median_pp = 0;
+    lobby.avg_stars = 0;
+    return;
   }
 
-  if (total == 0) {
-    lobby.median_mu = 0;
-  } else {
-    lobby.median_mu = total / factor;
+  const pps = [];
+  for (const player of lobby.players) {
+    pps.push(Math.min(600, player.pps[lobby.data.ruleset]));
   }
+
+  const middle = Math.floor(pps.length / 2);
+  if (pps.length % 2 == 0) {
+    lobby.median_pp = (pps[middle - 1] + pps[middle]) / 2;
+  } else {
+    lobby.median_pp = pps[middle];
+  }
+
+  lobby.avg_stars = db.prepare(`
+    SELECT AVG(stars) AS avg_stars FROM (
+      SELECT *, ABS(? - pp) AS pick_accuracy FROM map
+      WHERE stars >= ? AND stars <= ? AND (ranked = 4 OR season2 > 0)
+        AND dmca = 0 AND mode = ?
+        ${lobby.extra_filters}
+      ORDER BY pick_accuracy ASC LIMIT ?
+    )`,
+  ).get(
+      lobby.median_pp,
+      lobby.data.min_stars, lobby.data.max_stars,
+      lobby.data.ruleset,
+      Config.map_bucket_size,
+  ).avg_stars;
 }
 
 
@@ -54,16 +72,24 @@ async function select_next_map() {
     this.data.recent_maps.shift();
   }
 
+  if (!this.median_pp) {
+    update_median_mu(this);
+  }
   const select_map = () => {
     return db.prepare(`
       SELECT * FROM (
-        SELECT * FROM map
-        INNER JOIN rating ON rating.rowid = map.rating_id
-        WHERE (ranked = 4 OR season2 > 0) AND dmca = 0 AND map.mode = ? AND stars >= 3
-        ${this.extra_filters}
-        ORDER BY ABS(current_mu - ?) ASC LIMIT ?
+        SELECT *, ABS(? - pp) AS pick_accuracy FROM map
+        WHERE stars >= ? AND stars <= ? AND (ranked = 4 OR season2 > 0)
+          AND dmca = 0 AND mode = ?
+          ${this.extra_filters}
+        ORDER BY pick_accuracy ASC LIMIT ?
       ) ORDER BY RANDOM() LIMIT 1`,
-    ).get(this.data.ruleset, this.median_mu, Config.map_bucket_size);
+    ).get(
+        this.median_pp,
+        this.data.min_stars, this.data.max_stars,
+        this.data.ruleset,
+        Config.map_bucket_size,
+    );
   };
 
   let new_map = null;
@@ -72,6 +98,11 @@ async function select_next_map() {
     if (!this.data.recent_maps.includes(new_map.map_id)) {
       break;
     }
+  }
+
+  if (!new_map) {
+    await this.send(`Couldn't find a map in the ${this.data.min_stars}-${this.data.max_stars} range. :/`);
+    return;
   }
 
   this.data.recent_maps.push(new_map.map_id);
@@ -101,6 +132,8 @@ async function select_next_map() {
 async function init_lobby(lobby) {
   if (!lobby.data.ruleset) lobby.data.ruleset = 0;
   if (!lobby.data.recent_maps) lobby.data.recent_maps = [];
+  if (!lobby.data.min_stars) lobby.data.min_stars = 3;
+  if (!lobby.data.max_stars) lobby.data.max_stars = 11;
 
   lobby.match_participants = [];
 
@@ -109,7 +142,6 @@ async function init_lobby(lobby) {
   lobby.select_next_map = select_next_map;
   lobby.data.type = 'ranked';
   lobby.match_end_timeout = -1;
-  lobby.median_mu = 0;
   lobby.extra_filters = '';
 
   // Mania is only 4K for now

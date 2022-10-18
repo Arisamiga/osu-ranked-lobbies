@@ -224,6 +224,9 @@ async function register_routes(app) {
         creator_name: lobby.data.creator,
         creator_id: lobby.data.creator_id,
         map: lobby.map,
+        min_stars: lobby.data.min_stars,
+        max_stars: lobby.data.max_stars,
+        fixed_stars: lobby.data.fixed_star_range,
       });
     }
 
@@ -283,20 +286,20 @@ async function register_routes(app) {
       lobby.data.creator_id = req.user_id;
       lobby.data.ruleset = parseInt(req.body.ruleset, 10);
 
+      if (req.body.star_rating == 'fixed') {
+        lobby.data.min_stars = req.body.min_stars;
+        lobby.data.max_stars = req.body.max_stars;
+        lobby.data.fixed_star_range = true;
+      } else {
+        lobby.data.fixed_star_range = false;
+      }
+
       if (req.body.type == 'ranked') {
         await init_ranked_lobby(lobby);
       } else {
         if (req.body.title) {
           await lobby.send(`!mp name ${req.body.title}`);
           lobby.name = req.body.title;
-        }
-
-        if (req.body.star_rating == 'fixed') {
-          lobby.data.min_stars = req.body.min_stars;
-          lobby.data.max_stars = req.body.max_stars;
-          lobby.data.fixed_star_range = true;
-        } else {
-          lobby.data.fixed_star_range = false;
         }
 
         lobby.data.collection_id = req.body.collection_id;
@@ -317,6 +320,9 @@ async function register_routes(app) {
         scorev2: lobby.data.is_scorev2,
         creator_name: lobby.data.creator,
         creator_id: lobby.data.creator_id,
+        min_stars: lobby.data.min_stars,
+        max_stars: lobby.data.max_stars,
+        fixed_stars: lobby.data.fixed_star_range,
         map: lobby.map,
       },
     });
