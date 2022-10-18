@@ -1,8 +1,8 @@
 import * as fs from 'fs/promises';
 import {constants} from 'fs';
-import {createRequire} from 'module';
 import fetch from 'node-fetch';
-const require = createRequire(import.meta.url);
+// import {createRequire} from 'module';
+// const require = createRequire(import.meta.url);
 // const rosu = require('rosu-pp');
 
 import {osu_fetch} from './api.js';

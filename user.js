@@ -3,6 +3,8 @@ import bancho from './bancho.js';
 import db from './database.js';
 
 
+// TODO: for mania, we need to still scan user profile top 100. because we want to filter out non-4k maps
+
 async function init_user(user_id, user_data) {
   if (!user_data) {
     const res = await osu_fetch(`https://osu.ppy.sh/api/v2/users?ids[0]=${user_id}`);
@@ -79,6 +81,14 @@ function populate_ratings(user) {
     user.taiko_rating,
     user.catch_rating,
     user.mania_rating,
+  ];
+
+  const data = JSON.parse(user.profile_data);
+  user.pps = [
+    (data.statistics_rulesets?.osu?.pp || 0) / 20,
+    (data.statistics_rulesets?.taiko?.pp || 0) / 20,
+    (data.statistics_rulesets?.fruits?.pp || 0) / 20,
+    (data.statistics_rulesets?.mania?.pp || 0) / 20,
   ];
 }
 
