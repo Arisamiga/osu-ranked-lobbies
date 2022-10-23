@@ -1,14 +1,30 @@
-let m;
-let user_id = null;
+const rulesets = ['osu', 'taiko', 'catch', 'mania'];
+let selected_ruleset = parseInt(localStorage.getItem('selected_ruleset') || '0', 10);
 
+function update_selected_ruleset(name) {
+  if (name == 'std') name = 'osu';
+  if (name == 'fruits') name = 'catch';
+  if (!rulesets.includes(name)) name = 'osu';
 
-function fancy_elo(elo) {
-  if (elo == '???') {
-    return '???';
-  } else {
-    return Math.round(elo);
+  localStorage.setItem('selected_ruleset', rulesets.indexOf(name));
+  selected_ruleset = rulesets.indexOf(name);
+
+  document.querySelector('#toggle-rulesets-dropdown-btn img').src = `/images/mode-${rulesets[selected_ruleset]}.png`;
+}
+
+function update_header_highlights() {
+  const header_links = document.querySelectorAll('header a');
+  for (const link of header_links) {
+    if (location.pathname.includes(link.pathname)) {
+      link.classList.add('opacity-100');
+    } else {
+      link.classList.remove('opacity-100');
+    }
   }
 }
+
+let m;
+let user_id = null;
 
 
 // Returns the color of a given star rating, matching osu!web's color scheme.
@@ -36,6 +52,31 @@ function stars_to_color(sr) {
 }
 
 
+document.addEventListener('click', (event) => {
+  const open_ruleset_dropdown_btn = document.querySelector('#toggle-rulesets-dropdown-btn');
+  const ruleset_dropdown = document.querySelector('#rulesets-dropdown');
+  if (open_ruleset_dropdown_btn.contains(event.target)) {
+    ruleset_dropdown.classList.toggle('hidden');
+  } else {
+    ruleset_dropdown.classList.add('hidden');
+  }
+});
+
+document.querySelectorAll('.choose-ruleset').forEach((btn) => {
+  btn.addEventListener('click', function(event) {
+    event.preventDefault();
+    update_selected_ruleset(rulesets[parseInt(this.dataset.ruleset, 10)]);
+
+    let url = location.pathname;
+    for (const ruleset of rulesets) {
+      url = url.replaceAll(/\/(osu|taiko|catch|mania)/g, '/' + rulesets[selected_ruleset]);
+    }
+    window.history.pushState({}, '', url);
+    route(url);
+  });
+});
+
+
 function click_listener(evt) {
   if (this.pathname == '/osu_login') {
     document.cookie = 'redirect=' + location.pathname.split('/')[1];
@@ -46,9 +87,7 @@ function click_listener(evt) {
   if (this.host == location.host && this.target != '_blank') {
     evt.preventDefault();
 
-    console.log('Loading ' + this.href);
-    window.history.pushState({}, 'osu! ranked lobbies', this.href);
-    document.querySelector('main').innerHTML = '';
+    window.history.pushState({}, '', this.href);
     route(this.href);
   }
 };
@@ -66,12 +105,9 @@ async function get(url) {
   if (!user_id && res.headers.has('X-Osu-ID')) {
     user_id = parseInt(res.headers.get('X-Osu-ID'), 10);
 
-    const a = document.querySelector('.login_link');
-    a.setAttribute('class', 'profile_link');
-    a.href = '/u/' + user_id + '/';
-    a.innerHTML = `
-      <img src="https://s.ppy.sh/a/${user_id}" />
-      <span>Profile</span>`;
+    const a = document.querySelector('.login-btn');
+    a.href = `/u/${user_id}/${rulesets[selected_ruleset]}/`;
+    a.querySelector('img').src = `https://s.ppy.sh/a/${user_id}`;
   }
 
   const json = await res.json();
@@ -111,13 +147,15 @@ function render_pagination(node, page_num, max_pages, url_formatter) {
   const previous = Math.max(page_num - 1, 1);
   const next = Math.min(page_num + 1, max_pages);
   node.innerHTML = `
-    <a href="${url_formatter(previous)}"><span class="left-arrow">‹</span>Previous</a>
-    <div class="number-nav"></div>
-    <a href="${url_formatter(next)}">Next<span class="right-arrow">›</span></a>`;
+  <div class="flex justify-between m-5">
+    <a class="text-xl text-zinc-400 hover:text-zinc-50" href="${url_formatter(previous)}"><span class="text-2xl text-orange-600 mr-2">‹</span>Previous</a>
+    <div class="number-nav leading-10"></div>
+    <a class="text-xl text-zinc-400 hover:text-zinc-50" href="${url_formatter(next)}">Next<span class="text-2xl text-orange-600 ml-2">›</span></a>
+  </div>`;
   const numbers_div = node.querySelector('.number-nav');
   for (const page of pages) {
     numbers_div.innerHTML += `
-      <a ${page.is_current ? 'class="current-page"' : ''}
+      <a class="text-xl px-3 py-2 border-transparent border-2 ${page.is_current ? 'text-zinc-50 border-b-orange-600' : 'text-zinc-400 hover:text-zinc-50 hover:border-b-orange-400'}"
       href="${url_formatter(page.number)}">${page.number}</a>`;
   }
 }
@@ -132,15 +170,17 @@ function render_lobby(lobby) {
   }
 
   const color = stars_to_color(lobby.map ? lobby.map.stars : 0);
+  lobby_div.className = 'flex flex-1 m-2 rounded-md';
   lobby_div.style = `border: solid ${color} 2px`;
   lobby_div.innerHTML += `
-    <div class="lobby-info">
-      <div class="lobby-title"></div>
+    <div class="lobby-info min-w-[25rem] flex-1 p-2">
+      <div class="lobby-title font-bold"></div>
       <div>${stars} · ${lobby.nb_players}/16 players</div>
-      <div class="lobby-creator">Created by <a href="/u/${lobby.creator_id}"><img src="https://s.ppy.sh/a/${lobby.creator_id}" alt="Lobby creator"> ${lobby.creator_name}</a></div>
+      <div class="lobby-creator">Created by <a href="/u/${lobby.creator_id}"><img class="h-5 text-bottom rounded-full inline" src="https://s.ppy.sh/a/${lobby.creator_id}" alt="Lobby creator"> ${lobby.creator_name}</a></div>
     </div>
-    <div class="lobby-links" style="background-color:${color}">
-      <div><a href="/get-invite/${lobby.bancho_id}" target="_blank"><i class="fa-solid fa-xs fa-envelope"></i></a><span>Get invite</span></div>
+    <div class="lobby-links flex flex-col justify-evenly" style="background-color:${color}">
+      <div class="group relative text-center"><a class="!text-white text-2xl p-1.5 pl-2" href="osu://mp/${lobby.bancho_id}"><i class="fa-solid fa-xs fa-arrow-up-right-from-square"></i></a><span class="tooltip top-[-1.3rem]">Join (cutting edge only)</span></div>
+      <div class="group relative text-center"><a class="!text-white text-2xl p-1.5 pl-2" href="/get-invite/${lobby.bancho_id}" target="_blank"><i class="fa-solid fa-xs fa-envelope"></i></a><span class="tooltip top-[-0.1rem]">Get invite</span></div>
     </div>`;
   lobby_div.querySelector('.lobby-title').innerText = lobby.name;
   return lobby_div;
@@ -149,6 +189,10 @@ function render_lobby(lobby) {
 async function render_faq() {
   document.title = 'FAQ - o!RL';
   const template = document.querySelector('#FAQ-template').content.cloneNode(true);
+  const ranked_template = document.querySelector('#ranked-command-list-template').content.cloneNode(true);
+  const unranked_template = document.querySelector('#unranked-command-list-template').content.cloneNode(true);
+  template.querySelector('.ranked').appendChild(ranked_template);
+  template.querySelector('.unranked').appendChild(unranked_template);
   document.querySelector('main').appendChild(template);
 }
 
@@ -173,42 +217,34 @@ async function render_lobbies() {
       document.cookie = 'redirect=create-lobby';
       document.location = '/osu_login';
     } else {
-      console.log('Loading ' + '/create-lobby/');
-      window.history.pushState({}, 'osu! ranked lobbies', '/create-lobby/');
-      document.querySelector('main').innerHTML = '';
+      window.history.pushState({}, '', '/create-lobby/');
       route('/create-lobby/');
     }
   });
 }
 
 
+function fancy_elo(elo) {
+  if (elo == '???') {
+    return '???';
+  } else {
+    return Math.round(elo);
+  }
+}
+
 async function render_leaderboard(ruleset, page_num) {
   document.title = 'Leaderboard - o!RL';
   const json = await get(`/api/leaderboard/${ruleset}/${page_num}`);
 
   const template = document.querySelector('#leaderboard-template').content.cloneNode(true);
-  template.querySelector('.nb-ranked').innerText = `${json.nb_ranked_players} ranked players`;
-  template.querySelectorAll(`[ruleset^='${ruleset}']`).forEach((div) => {
-    div.style.filter = 'opacity(0.5)';
-  });
-
-  if (json.the_one) {
-    template.querySelector('.leaderboard-focus').innerHTML += `
-      <p class="username"><a href="/u/${json.the_one.user_id}/">${json.the_one.username}</a></p>
-      <p class="elo-value">${fancy_elo(json.the_one.elo)}</p>
-      <p class="elo">ELO</p>`;
-  } else {
-    template.querySelector('.leaderboard-focus').remove();
-  }
-
   const lboard = template.querySelector('.leaderboard tbody');
   for (const player of json.players) {
     lboard.innerHTML += `
-      <tr>
-        <td>${player.ranking}</td>
-        <td><a href="/u/${player.user_id}/">${player.username}</a></td>
-        <td>${fancy_elo(player.elo)}</td>
-        <td>ELO</td>
+      <tr class="inline-flex justify-between">
+        <td class="border border-transparent border-r-zinc-700 p-1.5 pr-3 w-10 text-right">${player.ranking}</td>
+        <td class="pl-3 p-1.5 ${player.ranking == 1 ? 'the-one': ''}"><a href="/u/${player.user_id}/">${player.username}</a></td>
+        <td class="p-1.5 ml-auto">${fancy_elo(player.elo)}</td>
+        <td class="p-1.5 text-orange-600">ELO</td>
       </tr>`;
   }
 
@@ -219,75 +255,66 @@ async function render_leaderboard(ruleset, page_num) {
 }
 
 
-async function render_user(user_id, ruleset, page_num) {
+async function render_user(user_id, page_num) {
   const json = await get('/api/user/' + user_id);
+  const user_info = json.ranks[selected_ruleset];
   document.title = `${json.username} - o!RL`;
 
-  const rulesets = ['osu', 'taiko', 'catch', 'mania'];
-  const rulesets2 = ['osu', 'taiko', 'fruits', 'mania'];
-  let mode = rulesets.indexOf(ruleset);
-  if (mode == -1) {
-    let best_rank = {nb_scores: -1};
-    for (const rank of json.ranks) {
-      if (rank.nb_scores > best_rank.nb_scores) {
-        best_rank = rank;
-      }
-    }
-    mode = best_rank.mode;
-    ruleset = rulesets[mode];
-  }
+  const division_to_class = {
+    'Unranked': 'unranked',
+    'Cardboard': 'cardboard',
+    'Wood': 'wood',
+    'Wood+': 'wood',
+    'Bronze': 'bronze',
+    'Bronze+': 'bronze',
+    'Silver': 'silver',
+    'Silver+': 'silver',
+    'Gold': 'gold',
+    'Gold+': 'gold',
+    'Platinum': 'platinum',
+    'Platinum+': 'platinum',
+    'Diamond': 'diamond',
+    'Diamond+': 'diamond',
+    'Rhythm Incarnate': 'rhythm-incarnate',
+    'The One': 'the-one',
+  };
 
-
+  const ruleset = rulesets[selected_ruleset];
   const template = document.querySelector('#user-template').content.cloneNode(true);
   template.querySelector('.heading-left img').src = `https://s.ppy.sh/a/${json.user_id}`;
   template.querySelector('.heading-right h1').innerText = json.username;
+  template.querySelector('.heading-right h1').classList.add(division_to_class[user_info.text]);
   template.querySelector('.heading-right .subheading').href = `https://osu.ppy.sh/users/${json.user_id}`;
   template.querySelectorAll('.user-modes a').forEach((div) => {
     div.href = `/u/${json.user_id}/${div.querySelector('img').getAttribute('ruleset')}`;
   });
-  template.querySelectorAll(`[ruleset^='${ruleset}']`).forEach((div) => {
-    div.style.filter = 'opacity(0.5)';
-  });
 
   const blocks = template.querySelectorAll('.user-focus-block');
-  if (json.ranks[mode].rank_nb >= 5) {
-    if (json.ranks[mode].text.includes('+')) {
-      json.ranks[mode].text = json.ranks[mode].text.replaceAll('+', '<span style=\'color:white;font-size:1em\'>+</span>');
-      blocks[0].innerHTML = `<span style="color: ${json.ranks[mode].rank_cr}">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
-      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
-      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
-    } else if (json.ranks[mode].text == 'Rhythm Incarnate') {
-      blocks[0].innerHTML = `<span style="background: -webkit-linear-gradient(#c14790, #8c92bd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: normal;">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
-      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
-      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
-    } else if (json.ranks[mode].text == 'The One') {
-      blocks[0].innerHTML = `<span style="background: -webkit-linear-gradient(#ff0070, #f98c8c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: normal;">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
-      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
-      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
-    } else {
-      blocks[0].innerHTML = `<span style="color: ${json.ranks[mode].rank_cr}">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
-      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
-      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
-    }
+  if (user_info.nb_scores >= 5) {
+    blocks[0].innerHTML = `<span class="text-3xl ${division_to_class[user_info.text]}">${user_info.text}</span><span class="text-xl p-1">Rank #${user_info.rank_nb}</span>`;
+    blocks[1].innerHTML = `<span class="text-orange-600 text-3xl">${user_info.nb_scores}</span><span class="text-xl p-1">Games Played</span>`;
+    blocks[2].innerHTML = `<span class="text-orange-600 text-3xl">${fancy_elo(user_info.elo)}</span><span class="text-xl p-1">Elo</span>`;
   } else {
-    blocks[0].innerHTML = `<span>Unranked</span><span>Rank #???</span>`;
-    blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
+    blocks[0].innerHTML = `<span class="text-3xl">Unranked</span><span class="text-xl p-1">Rank #???</span>`;
+    blocks[1].innerHTML = `<span class="text-orange-600 text-3xl">${user_info.nb_scores}</span><span class="text-xl p-1">Games Played</span>`;
     blocks[2].remove();
   }
   document.querySelector('main').appendChild(template);
 
   const matches_json = await get(`/api/user/${user_id}/${ruleset}/matches/${page_num}`);
   const tbody = document.querySelector('.match-history tbody');
+  const osu_rulesets = ['osu', 'taiko', 'fruits', 'mania'];
   for (const match of matches_json.matches) {
     const row = document.createElement('tr');
+    row.classList.add('inline-flex', 'justify-between');
     row.innerHTML = `
-      <td class="map">
-        <a href="https://osu.ppy.sh/beatmapsets/${match.map.set_id}#${rulesets2[mode]}/${match.map.id}"></a>
+      <td class="map grow w-40 p-1.5 text-center border border-transparent border-t-zinc-700">
+        <a href="https://osu.ppy.sh/beatmapsets/${match.map.set_id}#${osu_rulesets[selected_ruleset]}/${match.map.id}"></a>
       </td>
-      <td ${match.won ? 'class="green"' : 'class="red"'}>
+      <td class="w-40 p-1.5 text-center border border-transparent border-t-zinc-700 ${match.won ? 'text-green-600' : 'text-red-600'}">
         ${match.won ? 'WON' : 'LOST'}
       </td>
-      <td data-tms="${match.tms}">${match.time}</td>`;
+      <td class="w-40 p-1.5 text-center border border-transparent border-t-zinc-700" data-tms="${match.tms}">${match.time}</td>`;
     row.querySelector('.map a').innerText = match.map.name;
     tbody.appendChild(row);
   }
@@ -298,9 +325,12 @@ async function render_user(user_id, ruleset, page_num) {
 
 
 async function route(new_url) {
+  console.info('Loading ' + new_url);
+  document.querySelector('main').innerHTML = '';
+  update_header_highlights();
+
   if (new_url == '/osu_login') {
     document.location = '/osu_login';
-    location.reload();
     return;
   }
 
@@ -308,6 +338,8 @@ async function route(new_url) {
     document.title = 'New lobby - o!RL';
     document.querySelector('main').innerHTML = '';
     const template = document.querySelector('#lobby-creation-template').content.cloneNode(true);
+    console.log(template);
+    template.querySelector('h1').innerText = `New ${rulesets[selected_ruleset]} lobby`;
     document.querySelector('main').appendChild(template);
 
     document.querySelector('.lobby-settings').addEventListener('change', (evt) => {
@@ -334,10 +366,11 @@ async function route(new_url) {
       document.querySelector('main .lobby-creation-need-ref').hidden = true;
       document.querySelector('main .lobby-creation-spinner').hidden = false;
 
+      const lobby_type = document.querySelector('input[name="lobby-type"]:checked').value;
       try {
         const lobby_settings = {
-          type: document.querySelector('input[name="lobby-type"]:checked').value,
-          ruleset: document.querySelector('input[name="ruleset"]:checked').value,
+          type: lobby_type,
+          ruleset: selected_ruleset,
           star_rating: document.querySelector('main input[name="auto-star-rating"]').checked ? 'auto' : 'fixed',
           min_stars: parseFloat(document.querySelector('main input[name="min-stars"]').value),
           max_stars: parseFloat(document.querySelector('main input[name="max-stars"]').value),
@@ -374,6 +407,9 @@ async function route(new_url) {
 
         document.querySelector('.lobby-creation-spinner').hidden = true;
         document.querySelector('.lobby-creation-success .lobby').outerHTML = render_lobby(json_res.lobby).outerHTML;
+
+        const info_template = document.querySelector(lobby_type == 'ranked' ? '#ranked-command-list-template' : '#unranked-command-list-template').content.cloneNode(true);
+        document.querySelector('.lobby-creation-success .info').appendChild(info_template);
         document.querySelector('.lobby-creation-success').hidden = false;
       } catch (err) {
         document.querySelector('.lobby-creation-error .error-msg').innerText = err.message;
@@ -381,36 +417,43 @@ async function route(new_url) {
         document.querySelector('.lobby-creation-error').hidden = false;
       }
     }));
-  } else if (m = new_url.match(/\/lobbies\//)) {
-    document.querySelector('main').innerHTML = '';
-    await render_lobbies();
-  } else if (m = new_url.match(/\/leaderboard\/(.+)\/(page-(\d+)\/)?/)) {
-    const ruleset = m[1];
-    const page_num = m[3] || 1;
-    document.querySelector('main').innerHTML = '';
-    await render_leaderboard(ruleset, page_num);
-  } else if (m = new_url.match(/\/leaderboard\/(page-(\d+)\/)?/)) {
-    const page_num = m[2] || 1;
-    document.querySelector('main').innerHTML = '';
-    await render_leaderboard('osu', page_num);
-  } else if (m = new_url.match(/\/u\/(\d+)\/(.+)\/page-(\d+)\/?/)) {
-    const user_id = m[1];
-    const ruleset = m[2];
-    const page_num = m[3] || 1;
-    document.querySelector('main').innerHTML = '';
-    await render_user(user_id, ruleset, page_num);
   } else if (m = new_url.match(/\/faq\//)) {
     document.querySelector('main').innerHTML = '';
     await render_faq();
-  } else if (m = new_url.match(/\/u\/(\d+)\/(.+)\/?/)) {
-    const user_id = m[1];
+  } else if (m = new_url.match(/\/lobbies\//)) {
+    document.querySelector('main').innerHTML = '';
+    await render_lobbies();
+  } else if (m = new_url.match(/\/leaderboard\/(\w+)\/(page-(\d+)\/)?/)) {
+    const ruleset = m[1];
+    update_selected_ruleset(ruleset);
+
+    const page_num = m[3] || 1;
+    document.querySelector('main').innerHTML = '';
+    await render_leaderboard(ruleset, page_num);
+  } else if (m = new_url.match(/\/u\/(\d+)\/(\w+)\/page-(\d+)\/?/)) {
     const ruleset = m[2];
+    update_selected_ruleset(ruleset);
+
+    const user_id = m[1];
+    const page_num = m[3] || 1;
     document.querySelector('main').innerHTML = '';
-    await render_user(user_id, ruleset, 1);
-  } else if (m = new_url.match(/\/u\/(\d+)\/?/)) {
+    await render_user(user_id, page_num);
+  } else if (m = new_url.match(/\/u\/(\d+)\/(\w+)\/?/)) {
+    const ruleset = m[2];
+    update_selected_ruleset(ruleset);
+
     const user_id = m[1];
     document.querySelector('main').innerHTML = '';
-    await render_user(user_id, null, 1);
+    await render_user(user_id, 1);
+  } else if (m = new_url.match(/\/leaderboard\/(page-(\d+)\/)?/)) {
+    const page_num = m[2] || 1;
+    new_url = `/leaderboard/${rulesets[selected_ruleset]}/page-${page_num}/`;
+    window.history.replaceState({}, 'osu! ranked lobbies', new_url);
+    route(new_url);
+  } else if (m = new_url.match(/\/u\/(\d+)\/?/)) {
+    new_url = `/u/${m[1]}/${rulesets[selected_ruleset]}/`;
+    window.history.replaceState({}, 'osu! ranked lobbies', new_url);
+    route(new_url);
   } else {
     const main = document.querySelector('main');
     if (main.innerHTML.indexOf('{{ error }}') != -1) {
@@ -433,114 +476,6 @@ async function route(new_url) {
     });
   }
 }
-
-
-// User search
-const searchResults = document.querySelector('.search-results');
-const searchField = document.querySelector('.search-button');
-const searchFieldInput = document.querySelector('.search-button input');
-const searchFieldBackground = document.querySelector('.search-button + .search-background');
-if (searchField) {
-  searchField.addEventListener('click', () => searchFieldInput.focus());
-  searchFieldInput.addEventListener('focus', (ev) => {
-    let classes = searchField.getAttribute('class');
-    if (classes.indexOf('active') === -1) {
-      classes += ' active';
-      searchField.setAttribute('class', classes);
-    }
-  });
-
-  const searchTimeout = 400;
-  const lastSearchRequest = {
-    tms: null,
-    job: null,
-  };
-
-  searchField.addEventListener('input', (ev) => {
-    searchResults.innerHTML = '';
-    const searchQuery = ev.target.value;
-    clearTimeout(lastSearchRequest.job);
-    if (searchQuery === '') {
-      return;
-    };
-    lastSearchRequest.job = setTimeout(() => {
-      fetch(`/search?query=${searchQuery}`)
-          .then((res) => res.json())
-          .then((res) => {
-            res.forEach((player) => {
-              player.username = player.username.length > 20 ? (player.username.substr(0, 20)+'...') : player.username;
-              searchResults.innerHTML += `
-              <a href="/u/${player.user_id}" class="search-result-item">
-                <span>${player.username}</span>
-              </a>
-            `;
-            });
-            if (res.length === 0) {
-              searchResults.innerHTML = `
-              <div class="search-result-item not-found">
-                Nothing found!
-              </div>
-            `;
-            }
-          });
-    }, searchTimeout);
-    lastSearchRequest.tms = Date.now();
-  });
-
-  searchFieldBackground.addEventListener('click', () => {
-    searchField.setAttribute('class', searchField.getAttribute('class').replace('active', '').trim());
-  });
-}
-
-document.addEventListener('keydown', (event) => {
-  if (!document.querySelector('.search-button').classList.contains('active')) return;
-
-  if (event.key === 'Enter') {
-    const activeItem = document.querySelector('.search-result-item.active');
-    if (activeItem) {
-      document.location = activeItem.getAttribute('href');
-    }
-  }
-  const changeActiveItem = (isDown) => {
-    if (searchFieldInput === document.activeElement) {
-      searchFieldInput.blur();
-    }
-    const items = document.querySelectorAll('.search-result-item');
-    if (!document.querySelector('.search-result-item.active')) {
-      items[0].setAttribute('class', items[0].getAttribute('class')+' active');
-      return;
-    }
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].getAttribute('class').indexOf('active') !== -1) {
-        items[i].setAttribute('class', items[i].getAttribute('class').replace('active', '').trim());
-        let nextIndex;
-        if (isDown) {
-          nextIndex = ((i + 1) > (items.length - 1)) ? 0 : (i + 1);
-        } else {
-          nextIndex = ((i - 1) < 0) ? (items.length - 1) : (i - 1);
-        }
-        items[nextIndex].setAttribute('class', items[nextIndex].getAttribute('class')+' active');
-        return;
-      }
-    }
-  };
-  if (event.keyCode === 40) {
-    if (document.querySelector('.search-button.active')) {
-      event.preventDefault();
-    }
-    changeActiveItem(true);
-  }
-  if (event.keyCode === 38) {
-    if (document.querySelector('.search-button.active')) {
-      event.preventDefault();
-    }
-    changeActiveItem(false);
-  }
-  if (event.key === 'Escape') {
-    searchField.setAttribute('class', searchField.getAttribute('class').replace('active', '').trim());
-    searchFieldInput.blur();
-  }
-});
 
 
 // Load pages and hijack browser browsing

@@ -4,6 +4,8 @@ node_modules/
 
 config.json
 
+*.min.css
+*.min.js
 *.db
 *.db-shm
 *.db-wal

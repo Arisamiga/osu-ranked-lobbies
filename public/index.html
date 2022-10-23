@@ -4,68 +4,173 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>osu! ranked lobbies</title>
-    <link rel="stylesheet" href="/reset.css?v=1.0">
-    <link rel="stylesheet" href="/stylesheet.css?v=2.1">
+    <link rel="stylesheet" href="/styles.min.css?v=1.0">
     <link rel="stylesheet" href="/fa-main.min.css">
     <link rel="stylesheet" href="/fa-solid.min.css">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
   </head>
-  <body>
-    <div class="search-button">
-      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg"
-        width="24" height="24"
-        viewBox="0 0 24 24"><path d="M 9 2 C 5.1458514 2 2 5.1458514 2 9 C 2 12.854149 5.1458514 16 9 16 C 10.747998 16 12.345009 15.348024 13.574219 14.28125 L 14 14.707031 L 14 16 L 20 22 L 22 20 L 16 14 L 14.707031 14 L 14.28125 13.574219 C 15.348024 12.345009 16 10.747998 16 9 C 16 5.1458514 12.854149 2 9 2 z M 9 4 C 11.773268 4 14 6.2267316 14 9 C 14 11.773268 11.773268 14 9 14 C 6.2267316 14 4 11.773268 4 9 C 4 6.2267316 6.2267316 4 9 4 z"></path>
-      </svg>
-      <input type="text" placeholder="&nbsp;">
-      <div class="search-results"></div>
-    </div>
-    <div class="search-background"></div>
-
-    <div class="sidebar">
-      <a class="logo" href="/lobbies/">
-        <img src="/images/o!RL-logo.png" />
-      </a>
-      <nav>
-        <div class="other-links">
-          <a class="login_link" href="/osu_login">
-            <img src="/images/login.png" />
-            <span>Login</span>
-          </a>
-          <a href="/leaderboard/osu/">
-            <img src="/images/leaderboard.png" />
-            <span>Leaderboard</span>
+  <body class="bg-zinc-800">
+    <header class="h-16 bg-zinc-900">
+      <nav class="flex max-w-5xl m-auto p-1">
+        <div>
+          <a class="opacity-75 hover:opacity-100" href="/faq/">
+            <img class="p-1 h-14" src="/images/o!RL-logo.png" />
           </a>
         </div>
-        <div class="other-links">
-          <a href="https://kiwec.net/discord">
-            <img src="/images/discord.png" />
-            <span>Discord</span>
+        <div class="flex-auto self-center text-center">
+          <a class="p-1 opacity-75 hover:opacity-100" href="/lobbies/">
+            <span class="text-2xl">Lobbies</span>
           </a>
-          <a href="https://github.com/kiwec/osu-ranked-lobbies">
-            <img src="/images/github.png" />
-            <span>Github</span>
+          <i class="border opacity-75 ml-1 mr-2"> </i>
+          <a class="p-1 opacity-75 hover:opacity-100" href="/leaderboard/">
+            <span class="text-2xl">Leaderboard</span>
+          </a>
+        </div>
+        <div class="flex self-center">
+          <a class="p-2 opacity-75 hover:opacity-100" href="https://kiwec.net/discord">
+            <img class="h-8" src="/images/discord.png" />
+          </a>
+          <div class="relative">
+            <button id="toggle-rulesets-dropdown-btn" class="p-2 opacity-75 hover:opacity-100">
+              <img class="h-8" src="/images/mode-osu.png" />
+            </button>
+            <div id="rulesets-dropdown" class="absolute hidden z-10 mt-4 -ml-12 bg-zinc-700 rounded-md">
+              <button class="choose-ruleset flex p-2 w-36 opacity-75 hover:opacity-100 hover:bg-zinc-900" data-ruleset="0">
+                <img class="h-8" src="/images/mode-osu.png" />
+                <span class="px-2 leading-7">osu!</span>
+              </button>
+              <button class="choose-ruleset flex p-2 w-36 opacity-75 hover:opacity-100 hover:bg-zinc-900" data-ruleset="1">
+                <img class="h-8" src="/images/mode-taiko.png" />
+                <span class="px-2 leading-7">osu!taiko</span>
+              </button>
+              <button class="choose-ruleset flex p-2 w-36 opacity-75 hover:opacity-100 hover:bg-zinc-900" data-ruleset="2">
+                <img class="h-8" src="/images/mode-catch.png" />
+                <span class="px-2 leading-7">osu!catch</span>
+              </button>
+              <button class="choose-ruleset flex p-2 w-36 opacity-75 hover:opacity-100 hover:bg-zinc-900" data-ruleset="3">
+                <img class="h-8" src="/images/mode-mania.png" />
+                <span class="px-2 leading-7">osu!mania</span>
+              </button>
+            </div>
+          </div>
+
+          <a class="login-btn p-2 opacity-75 hover:opacity-100" href="/osu_login">
+            <img class="h-8 rounded-full" src="/images/login.png" />
           </a>
         </div>
       </nav>
-    </div>
+    </header>
 
-    <main>
+    <main class="p-8">
       {{ error }}
       <noscript>Sorry, but to reduce server load, pages are rendered client-side, with JavaScript :(</noscript>
     </main>
 
     <template id="FAQ-template">
-      <h1>FAQ</h1>
-      <div class="Faq-info">
-      <h3>Commands for ranked lobbies</h3>
-      <ul>
-        <li>
-          !info or !discord - Display some information for new players.
-          </li>
+      <div class="max-w-5xl m-auto">
+        <h2 class="mb-2 underline">Frequently Asked Questions</h2>
+        <h3 class="mt-1">When do I get a rank?</h3>
+        You get a rank after playing 5 games in a ranked lobby. To have it visible in this Discord server, you need to link your account in welcome.
+        <h3 class="mt-1">What are the ranks?</h3>
+        <table class="mt-1 mb-2">
+          <thead>
+            <tr><th class="border border-zinc-700 p-1.5">Division</th><th class="border border-zinc-700 p-1.5">Placement</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="border border-zinc-700 p-1.5 the-one">The One</td><td class="border border-zinc-700 p-1.5">#1</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 rhythm-incarnate pr-3">Rhythm Incarnate</td><td class="border border-zinc-700 p-1.5">Top 2.5%</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 diamond">Diamond</td><td class="border border-zinc-700 p-1.5">Top 10.1%</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 platinum">Platinum</td><td class="border border-zinc-700 p-1.5">Top 22.3%</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 gold">Gold</td><td class="border border-zinc-700 p-1.5">Top 38.3%</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 silver">Silver</td><td class="border border-zinc-700 p-1.5">Top 56.8%</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 bronze">Bronze</td><td class="border border-zinc-700 p-1.5">Top 75.5%</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 wood">Wood</td><td class="border border-zinc-700 p-1.5">Top 91.3%</td></tr>
+            <tr><td class="border border-zinc-700 p-1.5 cardboard">Cardboard</td><td class="border border-zinc-700 p-1.5">Bottom 8.6%</td></tr>
+          </tbody>
+        </table>
+        <h3 class="mt-1">How do the ranks work?</h3>
+        When you pass a map with 95% accuracy, you gain rank. When you don't, you lose rank. How much you gain or lose depends on your rank underline, as well as how hard the map is.
+        <h3 class="mt-1">Will mods make me rank up faster?</h3>
+        No. Using difficulty-reducing mods will invalidate your score; only HD, HR, MR, SD/PF, FI/FL are allowed.
+        <h3 class="mt-1">How are the maps chosen?</h3>
+        Maps are picked to best fit your current skill level.
+        <h3 class="mt-1"> What's the map pool?</h3>
+        Initially, the map pool consists of collections from map-pool. Over time, it expands to cover the entirety of osu! maps with a leaderboard (about 130k maps).
+        <h3 class="mt-1">Why is the star rating different from the title of the lobby?</h3>
+        Some maps are much easier/harder than their star rating represents. Also, the star rating shown by the client in multi lobbies is different from the current one (as shown on the osu! website).
+        <h3 class="mt-1">Why isn't the game starting when all players are ready?</h3>
+        That happens the last person that wasn't ready leaves. Anyone can unready and re-ready to start the game immediately. (I can't fix this bug, it comes from BanchoBot itself.)'
+        <h3 class="mt-1">Can I see the source code?</h3>
+        Yes: <a href="https://github.com/kiwec/osu-ranked-lobbies" target="_blank">https://github.com/kiwec/osu-ranked-lobbies</a>
+
+        <h2 class="mb-2 mt-8 underline">Commands for ranked lobbies</h3>
+        <div class="ranked"></div>
+        <div>
+        <h2 class="mb-2 mt-8 underline">Commands for unranked lobbies</h3>
+        <div class="unranked"></div>
+      </div>
+    </template>
+
+    <template id="lobbies-template">
+      <div class="max-w-5xl m-auto">
+        <div class="lobby-creation-banner border-2 border-orange-600 rounded-lg p-3 text-center mx-2 mb-2">
+          <span class="pl-2 pr-4">Not satisfied?</span><button class="go-to-create-lobby default-btn">Create your own!</button>
+        </div>
+        <div class="lobby-list flex flex-wrap"></div>
+      </div>
+    </template>
+
+    <template id="leaderboard-template">
+      <div class="max-w-5xl m-auto">
+        <div class="leaderboard-section">
+          <table class="leaderboard table-auto block">
+            <tbody class="flex flex-col">
+            </tbody>
+          </table>
+          <div class="pagination"></div>
+        </div>
+      </div>
+    </template>
+
+    <template id="user-template">
+      <div class="flex max-w-5xl m-auto">
+        <div class="heading-left"><img class="h-24 rounded-full" /></div>
+        <div class="heading-right ml-8">
+          <h1 class="ml-2 mt-1" style="line-height:1.5em"></h1>
+          <a class="subheading ml-4" target="_blank">osu! profile</a>
+        </div>
+      </div>
+      <div class="user-section max-w-5xl m-auto">
+        <div class="user-focus flex flex-wrap my-4">
+          <div class="user-focus-block border-2 border-orange-600 rounded-lg inline-flex flex-col flex-grow p-4 m-4 text-center"></div>
+          <div class="user-focus-block border-2 border-orange-600 rounded-lg inline-flex flex-col flex-grow p-4 m-4 text-center"></div>
+          <div class="user-focus-block border-2 border-orange-600 rounded-lg inline-flex flex-col flex-grow p-4 m-4 text-center"></div>
+        </div>
+        <h2>Match History</h2>
+        <table class="match-history block my-4">
+          <thead class="flex flex-col">
+            <tr class="inline-flex justify-between">
+              <td class="map grow w-40 p-1.5 text-center font-bold">Map</td>
+              <td class="w-40 p-1.5 text-center font-bold">Result</td>
+              <td class="w-40 p-1.5 text-center font-bold">Time</td>
+            </tr>
+          </thead>
+          <tbody class="flex flex-col"></tbody>
+        </table>
+        <div class="pagination"></div>
+      </div>
+    </template>
+
+    <template id="ranked-command-list-template">
+      <div class="command-list">
+        <ul>
           <li>
-            !start -  Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
+            !info or !discord - Display some information for new players.
+            </li>
+            <li>
+              !start -  Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
             </li>
             <li>
               !wait - Cancel !start. Use it when you're not done downloading.
@@ -82,261 +187,126 @@
             <li>
               !rank (player) - Display your rank or the rank of another player.
             </li>
-      </ul>
-      <h3>Commands for unranked lobbies</h3>
-      <ul>
-        <li>
-          !collection (id) -  Switches to another collection. Only the lobby creator can use this command.
-        </li>
-        <li>
-          !start - Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
-        </li>
-        <li>
-          !wait - Cancel !start. Use it when you're not done downloading.
-        </li>
-        <li>
-          !abort - Vote to abort the match. At least half the players in the lobby must vote to abort for a match to get aborted.
-        </li>
-        <li>
-          !skip - Vote to skip the current map. At least half the players in the lobby must vote to skip for a map to get skipped.
-        </li>
-      </ul>
-      <br>
-      <h2>Frequently Asked Questions</h2>
-      <br>
-      <h3>When do I get a rank?</h3>
-        You get a rank after playing 5 games in a ranked lobby. To have it visible in this Discord server, you need to link your account in welcome.
-      <h3>How do the ranks work?</h3>
-        When you pass a map with 95% accuracy, you gain rank. When you don't, you lose rank. How much you gain or lose depends on your rank, as well as how hard the map is.
-      <h3>Will mods make me rank up faster?</h3>
-        No. Using difficulty-reducing mods will invalidate your score; only HD, HR, MR, SD/PF, FI/FL are allowed.
-      <h3>How are the maps chosen?</h3>
-        Maps are picked to best fit your current skill level.
-      <h3> What's the map pool?</h3>
-        Initially, the map pool consists of collections from map-pool. Over time, it expands to cover the entirety of osu! maps with a leaderboard (about 130k maps).
-      <h3>Why is the star rating different from the title of the lobby?</h3>
-        Some maps are much easier/harder than their star rating represents. Also, the star rating shown by the client in multi lobbies is different from the current one (as shown on the osu! website).
-      <h3>What are the ranks?</h3>
-      <h4>Here is the rank distribution:</h4>
-      <ul class="Faq-Ranks">
-        <li> Cardboard: Bottom 8.6% </li>
-        <li> Wood: Top 91.3%</li>
-        <li> Bronze: Top 75.5%</li>
-        <li> Silver: Top 56.8%</li>
-        <li> Gold: Top 38.3%</li>
-        <li> Platinum: Top 22.3%</li>
-        <li> Diamond: Top 10.1%</li>
-        <li> Rhythm Incarnate: Top 2.5%</li>
-        <li> The One: #1</li>
-      </ul>
-      <h3>Why isn't the game starting when all players are ready?</h3>
-        That happens the last person that wasn't ready leaves. Anyone can unready and re-ready to start the game immediately. (I can't fix this bug, it comes from BanchoBot itself.)'
-      <h3>Can I see the source code?</h3>
-        Yes: <a href="https://github.com/kiwec/osu-ranked-lobbies">https://github.com/kiwec/osu-ranked-lobbies</a>
+        </ul>
       </div>
     </template>
 
-    <template id="lobbies-template">
-      <h1>Lobbies</h1>
-      <div class="lobby-creation-banner">
-        <span style="margin: auto 10px auto 20px">Not satisfied?</span><button class="go-to-create-lobby">Create your own!</button>
-      </div>
-      <div class="lobby-list"></div>
-    </template>
-
-    <template id="leaderboard-template">
-      <h1>Leaderboard</h1>
-      <span class="modes">
-        <a href="/leaderboard/osu/">
-          <img src="/images/mode-osu.png" ruleset="osu" >
-        </a>
-        <a href="/leaderboard/taiko/">
-         <img src="/images/mode-taiko.png" ruleset="taiko">
-        </a>
-          <a href="/leaderboard/catch/">
-        <img src="/images/mode-catch.png" ruleset="catch">
-        </a>
-        <a href="/leaderboard/mania/">
-          <img src="/images/mode-mania.png" ruleset="mania">
-        </a>
-      </span>
-      <div class="subheading">
-        <span class="nb-ranked"></span>
-      </div>
-      <div class="leaderboard-section">
-        <div class="leaderboard-focus">
-          <p class="ranking">The One</p>
-        </div>
-        <table class="leaderboard">
-          <tbody>
-          </tbody>
-        </table>
-        <div class="pagination"></div>
-      </div>
-    </template>
-
-    <template id="user-template">
-      <div class="heading">
-        <div class="heading-left"><img /></div>
-        <div class="heading-right">
-          <h1></h1>
-          <a class="subheading">
-            <span class="link_text">osu! profile</span>
-          </a>
-        </div>
-        <span class="user-modes">
-          <a href="./osu/">
-            <img class="modes" src="/images/mode-osu.png" ruleset="osu" >
-          </a>
-          <a href="./taiko/">
-           <img class="modes" src="/images/mode-taiko.png" ruleset="taiko">
-          </a>
-            <a href="./catch/">
-          <img class="modes" src="/images/mode-catch.png" ruleset="catch">
-          </a>
-          <a href="./mania/">
-            <img class="modes" src="/images/mode-mania.png" ruleset="mania">
-          </a>
-        </span>
-      </div>
-      <div class="user-section">
-        <div class="user-focus">
-          <div class="user-focus-block"></div>
-          <div class="user-focus-block"></div>
-          <div class="user-focus-block"></div>
-        </div>
-        <h2>Match History</h2>
-        <table class="match-history">
-          <thead>
-            <tr>
-              <td class="map">Map</td>
-              <td>Result</td>
-              <td>Time</td>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-        <div class="pagination"></div>
+    <template id="unranked-command-list-template">
+      <div class="command-list">
+        <ul>
+          <li>
+            !collection (id) -  Switches to another collection. Only the lobby creator can use this command.
+          </li>
+          <li>
+            !start - Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
+          </li>
+          <li>
+            !wait - Cancel !start. Use it when you're not done downloading.
+          </li>
+          <li>
+            !abort - Vote to abort the match. At least half the players in the lobby must vote to abort for a match to get aborted.
+          </li>
+          <li>
+            !skip - Vote to skip the current map. At least half the players in the lobby must vote to skip for a map to get skipped.
+          </li>
+        </ul>
       </div>
     </template>
 
     <template id="lobby-creation-template">
-      <h1 style="margin-bottom:30px">New lobby</h1>
+      <div class="max-w-5xl m-auto">
+        <h1 class="mb-6 font-bold">New lobby</h1>
 
-      <div class="lobby-settings">
-        <h3>Ruleset</h3>
-        <div class="radio-area">
-          <div class="radio"><input type="radio" name="ruleset" value="0" checked></div>
-          <div class="info">
-            <h2>osu!</h2>
-            <p>The mode where circles get clicked</p>
+        <div class="lobby-settings">
+          <h3 class="underline mb-4">Lobby type</h3>
+          <!-- TODO: on firefox, cursor isn't "pointer" when hovering .radio; even worse, clicking .radio doesn't change the lobby type! -->
+          <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
+            <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="lobby-type" value="ranked" checked></div>
+            <div class="info py-2 px-3 leading-5">
+              <span class="font-bold">Ranked</span>
+              <p>Map is selected automatically. Scores set in this lobby will appear on the o!RL leaderboard.</p>
+            </div>
           </div>
-        </div>
-        <div class="radio-area">
-          <div class="radio"><input type="radio" name="ruleset" value="1"></div>
-          <div class="info">
-            <h2>osu!taiko</h2>
-            <p>Tap drums to the rythm</p>
+          <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
+            <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="lobby-type" value="custom"></div>
+            <div class="info py-2 px-3 leading-5">
+              <span class="font-bold">Custom</span>
+              <p>Personalized map selection, but scores set in this lobby will not change your o!RL rank.</p>
+            </div>
           </div>
-        </div>
-        <div class="radio-area">
-          <div class="radio"><input type="radio" name="ruleset" value="2"></div>
-          <div class="info">
-            <h2>osu!catch</h2>
-            <p>Catch fruits to the beat</p>
+
+          <h3 class="underline mt-4 mb-2">Star rating</h3>
+          <div>
+            <label>
+              <input type="checkbox" name="auto-star-rating" checked>
+              Automatically choose star rating based on lobby players
+            </label>
           </div>
-        </div>
-        <div class="radio-area">
-          <div class="radio"><input type="radio" name="ruleset" value="3"></div>
-          <div class="info">
-            <h2>osu!mania 4k</h2>
-            <p>Piano simulator, but with only 4 keys</p>
+          <div class="star-rating-range mb-2" hidden>
+            <label>
+              <input class="p-1 w-20 text-center text-black mt-2 mr-1" type="number" min="0" max="11" value="4.0" step="0.1" name="min-stars">
+              Minimum star level
+            </label>
+            <br>
+            <label>
+              <input class="p-1 w-20 text-center text-black mt-1 mr-1" type="number" min="0" max="11" value="5.0" step="0.1" name="max-stars">
+              Maximum star level
+            </label>
           </div>
-        </div>
 
-        <h3>Lobby type</h3>
-        <div class="radio-area">
-          <div class="radio"><input type="radio" name="lobby-type" value="ranked" checked></div>
-          <div class="info">
-            <h2>Ranked</h2>
-            <p>Map is selected automatically. Scores set in this lobby will appear on the o!RL leaderboard.</p>
+          <div class="custom-settings mt-4" hidden>
+            <h3 class="underline mb-1">Title</h3>
+            <p>This is what will be shown on the website's lobby list.</p>
+            <input class="mt-1 p-1 w-72 text-sm" type="text" name="title" placeholder="New o!RL lobby">
+
+            <h3 class="underline mt-4 mb-1">Collection</h3>
+            <p>You can find or create a collection on <a href="https://osucollector.com/" target="_blank">osu!collector</a>.</p>
+            <input class="mt-1 p-1 w-72 text-sm" type="text" name="collection-url" placeholder="https://osucollector.com/collections/44">
+            <!-- TODO: More custom settings. filters, tags, etc. -->
           </div>
+
+          <button class="create-lobby-btn default-btn mt-4">Create lobby</button>
         </div>
-        <div class="radio-area">
-          <div class="radio"><input type="radio" name="lobby-type" value="custom"></div>
-          <div class="info">
-            <h2>Custom</h2>
-            <p>Personalized map selection, but scores set in this lobby will not change your o!RL rank.</p>
+
+        <div class="lobby-creation-spinner text-center mt-24" hidden>
+          <p>Creating lobby...</p>
+          <svg class="animate-spin m-auto my-4 h-10 w-10 text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+        </div>
+
+        <div class="lobby-creation-error" hidden>
+          An error occurred while creating the lobby:
+          <div class="error-msg mt-4"></div>
+
+          <button class="go-back-btn default-btn mt-4">Back</button>
+        </div>
+
+        <div class="lobby-creation-need-ref" hidden>
+          <p>Unfortunately, the bot couldn't create the lobby automatically. This happens when there are too many bot-created lobbies.</p>
+          <p>But don't worry, you can still create it yourself! Just follow these steps:</p>
+
+          <ul class="mb-2">
+            <li>Create a lobby in osu!</li>
+            <li>In the #multiplayer chat, send <strong>!mp addref botkiwec</strong></li>
+            <li>BanchoBot should have sent a match history link. Copy the URL and paste it here.</li>
+          </ul>
+
+          <input class="mt-1 p-1.5 w-96 text-sm" type="text" name="tournament-url" placeholder="https://osu.ppy.sh/community/matches/123456789">
+          <button class="create-lobby-btn default-btn m-1 py-1">Create lobby</button>
+        </div>
+
+        <div class="lobby-creation-success" hidden>
+          <h3 class="mt-4">Lobby created successfully!</h3>
+          <div class="lobby-list flex flex-wrap mt-4">
+            <div class="lobby"></div>
           </div>
-        </div>
-
-        <h3>Star rating</h3>
-        <div>
-          <label>
-            <input type="checkbox" name="auto-star-rating" checked>
-            Automatically choose star rating based on lobby players
-          </label>
-        </div>
-        <div class="star-rating-range" style="margin:10px" hidden>
-          <label>
-            <input type="number" min="0" max="11" value="4.0" step="0.1" name="min-stars">
-            Minimum star level
-          </label>
-          <br>
-          <label>
-            <input type="number" min="0" max="11" value="5.0" step="0.1" name="max-stars">
-            Maximum star level
-          </label>
-        </div>
-
-        <div class="custom-settings" hidden>
-          <h3>Title</h3>
-          <p>This is what will be shown on the website's lobby list.</p>
-          <input type="text" name="title" placeholder="New o!RL lobby">
-
-          <h3>Collection</h3>
-          <p>You can find or create a collection on <a href="https://osucollector.com/">osu!collector</a>.</p>
-          <input type="text" name="collection-url" placeholder="https://osucollector.com/collections/44">
-          <!-- TODO: More custom settings. filters, tags, etc. -->
-        </div>
-
-        <button class="create-lobby-btn">Create lobby</button>
-      </div>
-
-      <div class="lobby-creation-spinner" hidden>
-        <p>Creating lobby...</p>
-        <div class="spinner"></div>
-      </div>
-
-      <div class="lobby-creation-error" hidden>
-        An error occurred while creating the lobby:
-        <div class="error-msg" style="margin-top:10px"></div>
-
-        <button class="go-back-btn">Back</button>
-      </div>
-
-      <div class="lobby-creation-need-ref" hidden>
-        <p>Unfortunately, the bot couldn't create the lobby automatically. This happens when there are already 10 bot-created lobbies.</p>
-        <p>But don't worry, you can still create it yourself! Just follow these steps:</p>
-
-        <ul>
-          <li>Create a lobby in osu!</li>
-          <li>In the #multiplayer chat, send <strong>!mp addref botkiwec</strong></li>
-          <li>BanchoBot should have sent a match history link. Copy the URL and paste it here.</li>
-        </ul>
-
-        <input type="text" name="tournament-url" placeholder="https://osu.ppy.sh/community/matches/123456789">
-        <button class="create-lobby-btn">Create lobby</button>
-      </div>
-
-      <div class="lobby-creation-success" hidden>
-        <h3>Lobby created successfully!</h3>
-        <div class="lobby-list">
-          <div class="lobby"></div>
+          <div class="info mt-4"></div>
         </div>
       </div>
     </template>
 
-    <script src="/scripts.js?v=2.4" type="module"></script>
+    <script src="/scripts.js?v=2.5" type="module"></script>
   </body>
 </html>

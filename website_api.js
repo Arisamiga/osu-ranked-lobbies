@@ -80,7 +80,6 @@ async function get_leaderboard_page(ruleset, page_num) {
 
   const data = {
     nb_ranked_players: total_players.nb,
-    the_one: false,
     players: [],
     page: page_num,
     max_pages: nb_pages,
@@ -88,18 +87,6 @@ async function get_leaderboard_page(ruleset, page_num) {
 
   // Players
   let ranking = offset + 1;
-  if (ranking == 1) {
-    data.the_one = {
-      user_id: res[0].user_id,
-      username: res[0].username,
-      ranking: ranking,
-      elo: Math.round(res[0].elo),
-    };
-
-    res.shift();
-    ranking++;
-  }
-
   for (const user of res) {
     data.players.push({
       user_id: user.user_id,

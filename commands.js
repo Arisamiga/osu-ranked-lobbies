@@ -169,14 +169,14 @@ async function wait_command(msg, match, lobby) {
 async function about_command(msg, match, lobby) {
   if (lobby) {
     if (lobby.data.type == 'collection') {
-      await lobby.send(`This lobby will auto-select maps of a specific collection from osu!collector. All commands and answers to your questions are [${Config.discord_invite_link} in the Discord.]`);
+      await lobby.send(`This lobby will auto-select maps of a specific collection from osu!collector. More info: ${website_base_url}/faq/`);
     } else if (lobby.data.type == 'ranked') {
-      await lobby.send(`In this lobby, you get a rank based on how often you pass maps with 95% accuracy. All commands and answers to your questions are [${Config.discord_invite_link} in the Discord.]`);
+      await lobby.send(`In this lobby, you get a rank based on how often you pass maps with 95% accuracy. More info: ${website_base_url}/faq/`);
     } else {
       await lobby.send(`Bruh just send !collection <id> or !ranked <ruleset>`);
     }
   } else {
-    await bancho.privmsg(msg.from, `This bot can join lobbies and do many things. Commands and answers to your questions are available [${Config.discord_invite_link} in the Discord.]`);
+    await bancho.privmsg(msg.from, `${website_base_url}/faq/`);
   }
 }
 
