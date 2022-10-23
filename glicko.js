@@ -30,6 +30,23 @@ const RANK_DIVISIONS = [
   'Rhythm Incarnate',
 ];
 
+const RANK_DIVISIONS_COLORS = [
+  '#ad8762',
+  '#966F33',
+  '#966F33',
+  '#CD7F32',
+  '#CD7F32',
+  '#C0C0C0',
+  '#C0C0C0',
+  '#FFD700',
+  '#FFD700',
+  '#E5E4E2',
+  '#E5E4E2',
+  '#b9f2ff',
+  '#b9f2ff',
+  '#ff1a1a;',
+];
+
 
 // TODO: move to postgresql before deploy?
 
@@ -313,6 +330,32 @@ function get_rank_text(rank_float, nb_scores) {
   return RANK_DIVISIONS[RANK_DIVISIONS.length - 1];
 }
 
+function get_rank_color(rank_float, nb_scores) {
+  if (!rank_float || nb_scores < 5) {
+    return 'Unranked';
+  }
+  if (rank_float == 1.0) {
+    return 'The One';
+  }
+
+  // Epic rank distribution algorithm
+  for (let i = 0; i < RANK_DIVISIONS_COLORS.length; i++) {
+    // Turn current 'Cardboard' rank into a value between 0 and 1
+    const rank_nb = (i + 1) / RANK_DIVISIONS_COLORS.length;
+
+    // To make climbing ranks more satisfying, we make lower ranks more common.
+    // Visual representation: https://graphtoy.com/?f1(x,t)=1-((cos(x%5E0.8*%F0%9D%9C%8B)/2)+0.5)&v1=true&f2(x,t)=&v2=true&f3(x,t)=&v3=false&f4(x,t)=&v4=false&f5(x,t)=&v5=false&f6(x,t)=&v6=false&grid=true&coords=0.3918011117299855,0.3722110561434862,1.0068654346588846
+    const cutoff = 1 - ((Math.cos(Math.pow(rank_nb, 0.8) * Math.PI) / 2) + 0.5);
+    if (rank_float < cutoff) {
+      return RANK_DIVISIONS_COLORS[i];
+    }
+  }
+
+  // Ok, floating point errors, who cares
+  return RANK_DIVISIONS_COLORS[RANK_DIVISIONS_COLORS.length - 1];
+}
+
+
 function get_map_rank(map_id) {
   const res = db.prepare(`
     SELECT nb_scores, elo, map.mode AS mode
@@ -373,7 +416,8 @@ function get_user_ranks(user_id) {
   `).get(elos.osu_elo, elos.taiko_elo, elos.catch_elo, elos.mania_elo);
 
   const build_rating = (mode, elo, nb_total, nb_better, nb_scores) => {
-    const ratio = 1.0 - (nb_better / nb_total);
+    const ratio = 0.9999;
+    nb_scores = 8;
     return {
       mode: mode,
       elo: nb_scores < 5 ? '???' : elo,
@@ -382,6 +426,7 @@ function get_user_ranks(user_id) {
       rank_nb: nb_scores < 5 ? '???' : nb_better + 1,
       nb_scores: nb_scores,
       text: get_rank_text(ratio, nb_scores),
+      rank_cr: get_rank_color(ratio, nb_scores),
     };
   };
   return [

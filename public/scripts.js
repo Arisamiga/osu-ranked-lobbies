@@ -236,9 +236,24 @@ async function render_user(user_id, ruleset, page_num) {
 
   const blocks = template.querySelectorAll('.user-focus-block');
   if (json.ranks[mode].rank_nb >= 5) {
-    blocks[0].innerHTML = `<span>${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
-    blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
-    blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
+    if (json.ranks[mode].text.includes('+')) {
+      json.ranks[mode].text = json.ranks[mode].text.replaceAll('+', '<span style=\'color:white;font-size:1em\'>+</span>');
+      blocks[0].innerHTML = `<span style="color: ${json.ranks[mode].rank_cr}">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
+      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
+      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
+    } else if (json.ranks[mode].text == 'Rhythm Incarnate') {
+      blocks[0].innerHTML = `<span style="background: -webkit-linear-gradient(#c14790, #8c92bd); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: normal;">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
+      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
+      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
+    } else if (json.ranks[mode].text == 'The One') {
+      blocks[0].innerHTML = `<span style="background: -webkit-linear-gradient(#ff0070, #f98c8c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: normal;">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
+      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
+      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
+    } else {
+      blocks[0].innerHTML = `<span style="color: ${json.ranks[mode].rank_cr}">${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
+      blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
+      blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
+    }
   } else {
     blocks[0].innerHTML = `<span>Unranked</span><span>Rank #???</span>`;
     blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
