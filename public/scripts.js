@@ -235,7 +235,7 @@ async function render_user(user_id, ruleset, page_num) {
   template.querySelector('.heading-right .subheading').href = `https://osu.ppy.sh/users/${json.user_id}`;
 
   const blocks = template.querySelectorAll('.user-focus-block');
-  if (json.ranks[mode].rank_nb >= 5) {
+  if (json.ranks[mode].nb_scores >= 5) {
     blocks[0].innerHTML = `<span>${json.ranks[mode].text}</span><span>Rank #${json.ranks[mode].rank_nb}</span>`;
     blocks[1].innerHTML = `<span>${json.ranks[mode].nb_scores}</span><span>Games Played</span>`;
     blocks[2].innerHTML = `<span>${fancy_elo(json.ranks[mode].elo)}</span><span>Elo</span>`;
