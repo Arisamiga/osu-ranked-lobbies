@@ -197,7 +197,7 @@ async function listen() {
     const data = {title: 'Account Linked - o!RL'};
 
     // If the user has just logged in. Redirect them to the page they were on before.
-    if (req.cookies.redirect != null) {
+    if (req.cookies.redirect != null && !req.cookies.redirect.includes('success')) {
       const redirect = req.cookies.redirect;
       http_res.clearCookie('redirect');
       http_res.redirect('/' + redirect + '/');
