@@ -136,7 +136,7 @@ async function rank_command(msg, match, lobby) {
 async function start_command(msg, match, lobby) {
   if (lobby.countdown != -1 || lobby.playing) return;
 
-  if (lobby.nb_players < 2) {
+  if (lobby.players.length < 2) {
     await lobby.send(`!mp start .${Math.random().toString(36).substring(2, 6)}`);
     return;
   }
@@ -193,7 +193,7 @@ async function abort_command(msg, match, lobby) {
   if (!lobby.voteaborts.includes(msg.from)) {
     lobby.voteaborts.push(msg.from);
     const nb_voted_to_abort = lobby.voteaborts.length;
-    const nb_required_to_abort = Math.ceil(lobby.nb_players / 4);
+    const nb_required_to_abort = Math.ceil(lobby.players.length / 4);
     if (lobby.voteaborts.length >= nb_required_to_abort) {
       await lobby.send(`!mp abort ${Math.random().toString(36).substring(2, 6)}`);
       lobby.voteaborts = [];
@@ -218,7 +218,7 @@ async function ban_command(msg, match, lobby) {
     lobby.votekicks[bad_player].push(msg.from);
 
     const nb_voted_to_kick = lobby.votekicks[bad_player].length;
-    let nb_required_to_kick = Math.ceil(lobby.nb_players / 2);
+    let nb_required_to_kick = Math.ceil(lobby.players.length / 2);
     if (nb_required_to_kick == 1) nb_required_to_kick = 2; // don't allow a player to hog the lobby
 
     if (nb_voted_to_kick >= nb_required_to_kick) {
