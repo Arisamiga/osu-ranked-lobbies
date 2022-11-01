@@ -85,7 +85,7 @@ async function update_rating(entity, ratings, is_player) {
     if (!Array.isArray(score.mods)) {
       score.mods = JSON.parse(score.mods);
     }
-    const allowed_mods = ['HD', 'HR', 'SD', 'PF', 'DT', 'NC', 'FI', 'FL', 'MR'];
+    const allowed_mods = ['HD', 'HR', 'SD', 'PF', 'DT', 'NC', 'FI', 'FL', 'MR', 'CO'];
     let ignore_score = false;
     for (const mod of score.mods) {
       if (allowed_mods.indexOf(mod) == -1) {
