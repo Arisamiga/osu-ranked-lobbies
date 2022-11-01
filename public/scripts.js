@@ -1,5 +1,6 @@
 const rulesets = ['osu', 'taiko', 'catch', 'mania'];
 let selected_ruleset = parseInt(localStorage.getItem('selected_ruleset') || '0', 10);
+let user_id = localStorage.getItem('user_id');
 
 function update_selected_ruleset(name) {
   if (name == 'std') name = 'osu';
@@ -23,8 +24,13 @@ function update_header_highlights() {
   }
 }
 
-let m;
-let user_id = null;
+function update_header_profile() {
+  if (!user_id) return;
+
+  const a = document.querySelector('.login-btn');
+  a.href = `/u/${user_id}/${rulesets[selected_ruleset]}/`;
+  a.querySelector('img').src = `https://s.ppy.sh/a/${user_id}`;
+}
 
 
 // Returns the color of a given star rating, matching osu!web's color scheme.
@@ -104,10 +110,8 @@ async function get(url) {
 
   if (!user_id && res.headers.has('X-Osu-ID')) {
     user_id = parseInt(res.headers.get('X-Osu-ID'), 10);
-
-    const a = document.querySelector('.login-btn');
-    a.href = `/u/${user_id}/${rulesets[selected_ruleset]}/`;
-    a.querySelector('img').src = `https://s.ppy.sh/a/${user_id}`;
+    localStorage.setItem('user_id', user_id);
+    update_header_profile();
   }
 
   const json = await res.json();
@@ -328,12 +332,15 @@ async function route(new_url) {
   console.info('Loading ' + new_url);
   document.querySelector('main').innerHTML = '';
   update_header_highlights();
+  update_header_profile();
+  update_selected_ruleset(rulesets[selected_ruleset]);
 
   if (new_url == '/osu_login') {
     document.location = '/osu_login';
     return;
   }
 
+  let m;
   if (m = new_url.match(/\/create-lobby\//)) {
     document.title = 'New lobby - o!RL';
     document.querySelector('main').innerHTML = '';
