@@ -1,9 +1,7 @@
 import * as fs from 'fs/promises';
 import {constants} from 'fs';
 import fetch from 'node-fetch';
-// import {createRequire} from 'module';
-// const require = createRequire(import.meta.url);
-// const rosu = require('rosu-pp');
+import {Beatmap, Calculator} from 'rosu-pp';
 
 import {osu_fetch} from './api.js';
 import db from './database.js';
@@ -15,8 +13,6 @@ async function get_map_info(map_id, api_res) {
   if (map) {
     return map;
   }
-
-  throw new Error('rosu-pp disabled');
 
   // 1. Download the map
   // Looking for .osu files? peppy provides monthly dumps here: https://data.ppy.sh/
@@ -37,8 +33,12 @@ async function get_map_info(map_id, api_res) {
   }
 
   // 2. Process it with rosu-pp
-  const info = rosu.calculate({path: file})[0];
-  let approx_mu = (info.stars * 325 - 1500) / 173.7178; // 4.6* ~= 1500 elo (patented algorithm)
+  const rosu_map = new Beatmap({path: file});
+  const calc = new Calculator();
+  const attrs = calc.mapAtributes(rosu_map);
+  const perf = calc.performance(rosu_map);
+  const strains = calc.strains(rosu_map);
+  let approx_mu = (perf.difficulty.stars * 325 - 1500) / 173.7178; // 4.6* ~= 1500 elo (patented algorithm)
   if (approx_mu < 0) approx_mu = 0;
   if (approx_mu > 3000) approx_mu = 3000;
 
@@ -56,11 +56,11 @@ async function get_map_info(map_id, api_res) {
   db.prepare(`
     INSERT INTO map (
       map_id, name, mode, stars, pp, pp_aim, pp_acc, pp_fl, pp_speed, pp_strain,
-      strain_aim, strain_speed, ar, cs, hp, od, bpm, set_id, length, ranked, dmca, rating_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-      map_id, api_res.beatmapset.title, api_res.mode_int, info.stars, info.pp, info.ppAim,
-      info.ppAcc, info.ppFlashlight, info.ppSpeed, info.ppStrain, info.aimStrain,
-      info.speedStrain, info.ar, info.cs, info.hp, info.od, info.bpm,
+      ar, cs, hp, od, bpm, set_id, length, ranked, dmca, rating_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
+      map_id, api_res.beatmapset.title, api_res.mode_int, perf.difficulty.stars, perf.pp, perf.ppAim,
+      perf.ppAcc, perf.ppFlashlight, perf.ppSpeed, perf.ppDifficulty,
+      attrs.ar, attrs.cs, attrs.hp, attrs.od, attrs.bpm,
       api_res.beatmapset.id, api_res.total_length, api_res.beatmapset.ranked,
       api_res.beatmapset.availability.download_disabled ? 1 : 0, rating.rowid,
   );
