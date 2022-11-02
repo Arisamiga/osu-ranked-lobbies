@@ -35,7 +35,7 @@ async function get_map_info(map_id, api_res) {
   // 2. Process it with rosu-pp
   const rosu_map = new Beatmap({path: file});
   const calc = new Calculator();
-  const attrs = calc.mapAtributes(rosu_map);
+  const attrs = calc.mapAttributes(rosu_map);
   const perf = calc.performance(rosu_map);
   const strains = calc.strains(rosu_map);
   let approx_mu = (perf.difficulty.stars * 325 - 1500) / 173.7178; // 4.6* ~= 1500 elo (patented algorithm)
