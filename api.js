@@ -52,6 +52,8 @@ async function osu_fetch(url, options) {
     oauth_token = null;
     await promisify(setTimeout)(1000);
     return await osu_fetch(url, options);
+  } else if (res.status == 404) {
+    throw new Error('Not found');
   } else {
     const json = await res.json();
     return json;

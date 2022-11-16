@@ -11,6 +11,7 @@ import {update_division} from './discord_updates.js';
 import Config from './util/config.js';
 import {get_user_by_id} from './user.js';
 import {capture_sentry_exception} from './util/helpers.js';
+import {get_map_info} form './glicko.js';
 
 
 const RANK_DIVISIONS = [
@@ -160,11 +161,15 @@ async function save_game_and_update_rating(lobby, game) {
   const rating_columns = ['osu_rating', 'taiko_rating', 'catch_rating', 'mania_rating'];
 
   try {
+    // Make sure we have the map in the database
+    const map_id = game.beatmap.id || lobby.beatmap_id;
+    await get_map_info(map_id, null);
+
     db.prepare(`INSERT INTO game (
       game_id, match_id, start_time, end_time, beatmap_id,
       play_mode, scoring_type, team_type, mods
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-        game.id, lobby.id, Date.parse(game.start_time).valueOf(), tms, game.beatmap.id,
+        game.id, lobby.id, Date.parse(game.start_time).valueOf(), tms, map_id,
         game.mode_int, game.scoring_type, game.team_type, JSON.stringify(game.mods),
     );
   } catch (err) {

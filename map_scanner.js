@@ -7,8 +7,32 @@ import {osu_fetch} from './api.js';
 import db from './database.js';
 
 
+// Promise queue to make sure we're only scanning one map at a time (eliminating race conditions)
+const queue = [];
+async function run_queue_loop() {
+  while (queue.length > 0) {
+    try {
+      const res = await _get_map_info(queue[0].map_id, queue[0].api_res);
+      queue[0].resolve(res);
+    } catch (err) {
+      queue[0].reject(err);
+    }
+
+    queue.shift();
+  }
+}
+
+function get_map_info(map_id, api_res) {
+  return new Promise((resolve, reject) => {
+    queue.push({map_id, api_res, resolve, reject});
+
+    // First item in the queue: init queue loop
+    if (queue.length == 1) run_queue_loop();
+  });
+}
+
 // Get metadata and pp from map ID (downloads it if not already downloaded)
-async function get_map_info(map_id, api_res) {
+async function _get_map_info(map_id, api_res) {
   const map = db.prepare(`SELECT * FROM map WHERE map_id = ?`).get(map_id);
   if (map) {
     return map;

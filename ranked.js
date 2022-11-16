@@ -95,6 +95,8 @@ async function select_next_map() {
   let new_map = null;
   for (let i = 0; i < 10; i++) {
     new_map = select_map();
+    if (!new_map) break;
+
     if (!this.data.recent_maps.includes(new_map.map_id)) {
       break;
     }
@@ -243,7 +245,13 @@ async function init_lobby(lobby) {
           return;
         }
       } catch (err) {
-        capture_sentry_exception(err);
+        if (err.name == 'SyntaxError') {
+          await lobby.send('osu!api is having issues, scores ignored. More info: https://status.ppy.sh/');
+        } else {
+          capture_sentry_exception(err);
+        }
+
+        return;
       }
 
       lobby.data.last_game_id = game.id;

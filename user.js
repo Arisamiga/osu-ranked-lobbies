@@ -11,6 +11,11 @@ async function init_user(user_id, user_data) {
     user_data = res.users[0];
   }
 
+  if (!user_data) {
+    console.error('Invalid user ID', user_id, '- WTF?');
+    throw new Error('Invalid user ID');
+  }
+
   // Migrate old profiles
   let discord_user_id = null;
   const old_profile = db.prepare(`SELECT discord_id FROM old_discord_user WHERE osu_id = ?`).get(user_id);

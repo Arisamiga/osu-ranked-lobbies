@@ -45,6 +45,7 @@ async function listen() {
     }
 
     res.clearCookie('token');
+    res.set('X-Osu-ID', '0');
     next();
   });
 
@@ -256,8 +257,13 @@ async function listen() {
   app.get('/u/:userId', async (req, http_res) => {
     if (req.get('User-Agent').indexOf('Discordbot') != -1) {
       const user = await get_user_by_id(req.params.userId, false);
+      if (!user) {
+        http_res.status(404).send('');
+        return;
+      }
+
       const info = get_user_ranks(user.user_id);
-      if (!user || !info) {
+      if (!info) {
         http_res.status(404).send('');
         return;
       }

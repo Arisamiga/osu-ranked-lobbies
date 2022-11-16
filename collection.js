@@ -26,11 +26,29 @@ async function select_next_map() {
   }
 
   let new_map = null;
+  let tries = 0;
   do {
+    tries++;
+
     const mapset = random_from(this.data.collection.beatmapsets);
     const map_id = random_from(mapset.beatmaps).id;
-    new_map = await get_map_info(map_id);
-  } while (this.recently_played.includes(new_map.id));
+
+    try {
+      new_map = await get_map_info(map_id);
+    } catch (err) {
+      if (err.message == 'Invalid map ID') {
+        continue;
+      } else {
+        catch_sentry_exception(err);
+        continue;
+      }
+    }
+  } while (this.recently_played.includes(new_map.id) && tries < 25);
+
+  if (tries == 25) {
+    await this.send('Couldn\'t select any map. Is the collection too small?');
+    return;
+  }
 
   const flavor = `${MAP_TYPES[new_map.ranked]} ${new_map.stars.toFixed(2)}*, ${Math.round(new_map.overall_pp)}pp`;
   const map_name = `[https://osu.ppy.sh/beatmaps/${new_map.id} ${new_map.name}]`;
