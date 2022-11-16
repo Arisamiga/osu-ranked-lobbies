@@ -35,11 +35,14 @@ function update_header_highlights() {
 }
 
 function update_header_profile() {
-  if (!user_id) return;
-
   const a = document.querySelector('.login-btn');
-  a.href = `/u/${user_id}/${rulesets[selected_ruleset]}/`;
-  a.querySelector('img').src = `https://s.ppy.sh/a/${user_id}`;
+  if (user_id) {
+    a.href = `/u/${user_id}/${rulesets[selected_ruleset]}/`;
+    a.querySelector('img').src = `https://s.ppy.sh/a/${user_id}`;
+  } else {
+    a.href = '/osu_login';
+    a.querySelector('img').src = `/images/login.png`;
+  }
 }
 
 
