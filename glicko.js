@@ -11,7 +11,7 @@ import {update_division} from './discord_updates.js';
 import Config from './util/config.js';
 import {get_user_by_id} from './user.js';
 import {capture_sentry_exception} from './util/helpers.js';
-import {get_map_info} form './glicko.js';
+import {get_map_info} from './map_scanner.js';
 
 
 const RANK_DIVISIONS = [

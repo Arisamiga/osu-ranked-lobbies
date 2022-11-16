@@ -2,6 +2,16 @@ const rulesets = ['osu', 'taiko', 'catch', 'mania'];
 let selected_ruleset = parseInt(localStorage.getItem('selected_ruleset') || '0', 10);
 let user_id = localStorage.getItem('user_id');
 
+function finish_authentication() {
+  const id = document.querySelector('#authenticated_osu_id').value;
+  if (id == '{{ user_id }}') return;
+
+  user_id = parseInt(id, 10);
+  localStorage.setItem('user_id', user_id);
+  update_header_profile();
+}
+finish_authentication();
+
 function update_selected_ruleset(name) {
   if (name == 'std') name = 'osu';
   if (name == 'fruits') name = 'catch';
@@ -330,7 +340,6 @@ async function render_user(user_id, page_num) {
 
 async function route(new_url) {
   console.info('Loading ' + new_url);
-  document.querySelector('main').innerHTML = '';
   update_header_highlights();
   update_header_profile();
   update_selected_ruleset(rulesets[selected_ruleset]);
