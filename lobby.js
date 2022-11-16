@@ -161,7 +161,7 @@ class BanchoLobby extends EventEmitter {
           }
           this.emit('refereeRemoved', m[1]);
         } else if (m = slot_regex.exec(message)) {
-          const cached = this.player_cache.find((p) => p.id == m[3]);
+          const cached = this.player_cache.find((p) => p.user_id == m[3]);
           if (cached) {
             cached.irc_username = m[4].substring(0, 15).trimEnd();
             cached.state = m[2];
