@@ -19,6 +19,7 @@ class BanchoLobby extends EventEmitter {
 
     // A player is a full_player from the database (safe to assume they have a rank, etc)
     // It has an additional irc_username field, that can differ from their actual username.
+    this.player_cache = [];
     this.players = [];
 
     this.voteaborts = [];
@@ -149,6 +150,7 @@ class BanchoLobby extends EventEmitter {
         } else if (m = mods_regex.exec(message)) {
           this.active_mods = m[1];
         } else if (m = players_regex.exec(message)) {
+          this.player_cache = this.players;
           this.players = [];
           this.players_to_parse = parseInt(m[1], 10);
         } else if (m = ref_add_regex.exec(message)) {
@@ -159,6 +161,26 @@ class BanchoLobby extends EventEmitter {
           }
           this.emit('refereeRemoved', m[1]);
         } else if (m = slot_regex.exec(message)) {
+          const cached = this.player_cache.find((p) => p.id == m[3]);
+          if (cached) {
+            cached.irc_username = m[4].substring(0, 15).trimEnd();
+            cached.state = m[2];
+            cached.is_host = m[4].substring(16).indexOf('Host') != -1;
+            if (cached.is_host) {
+              this.host = cached;
+            }
+
+            if (!this.players.some((p) => p.user_id == cached.user_id)) {
+              this.players.push(cached);
+            }
+            this.players_to_parse--;
+            if (this.players_to_parse == 0) {
+              this.emit('settings');
+            }
+
+            return;
+          }
+
           // !mp settings - single user result
           get_user_by_id(parseInt(m[3], 10), true).then((player) => {
             player.irc_username = m[4].substring(0, 15).trimEnd();
