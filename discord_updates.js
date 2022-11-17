@@ -100,7 +100,9 @@ async function update_division(osu_user_id) {
   }
 
   try {
-    await member.roles.remove(DISCORD_ROLES[old_role]);
+    if (old_role) {
+      await member.roles.remove(DISCORD_ROLES[old_role]);
+    }
     await member.roles.add(DISCORD_ROLES[new_division]);
   } catch (err) {
     console.log(`[Discord] Failed to update rank ${new_division} from discord user ${member.displayName}`);
