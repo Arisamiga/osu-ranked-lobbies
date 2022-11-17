@@ -1,14 +1,16 @@
 const rulesets = ['osu', 'taiko', 'catch', 'mania'];
 let selected_ruleset = parseInt(localStorage.getItem('selected_ruleset') || '0', 10);
-let user_id = localStorage.getItem('user_id');
+let user_id = localStorage.getItem('user_id') || '0';
 
 function finish_authentication() {
   const id = document.querySelector('#authenticated_osu_id').value;
   if (id == '{{ user_id }}') return;
 
-  user_id = parseInt(id, 10);
-  localStorage.setItem('user_id', user_id);
-  update_header_profile();
+  if (id != '0') {
+    user_id = id;
+    localStorage.setItem('user_id', user_id);
+    update_header_profile();
+  }
 }
 finish_authentication();
 
@@ -36,7 +38,7 @@ function update_header_highlights() {
 
 function update_header_profile() {
   const a = document.querySelector('.login-btn');
-  if (user_id) {
+  if (user_id != '0') {
     a.href = `/u/${user_id}/${rulesets[selected_ruleset]}/`;
     a.querySelector('img').src = `https://s.ppy.sh/a/${user_id}`;
   } else {
@@ -122,7 +124,7 @@ async function get(url) {
   });
 
   if (!user_id && res.headers.has('X-Osu-ID')) {
-    user_id = parseInt(res.headers.get('X-Osu-ID'), 10);
+    user_id = res.headers.get('X-Osu-ID');
     localStorage.setItem('user_id', user_id);
     update_header_profile();
   }
@@ -230,7 +232,7 @@ async function render_lobbies() {
   document.querySelector('main').appendChild(template);
   document.querySelector('main .go-to-create-lobby').addEventListener('click', (evt) => {
     evt.preventDefault();
-    if (user_id == null) {
+    if (user_id == '0') {
       document.cookie = 'redirect=create-lobby';
       document.location = '/osu_login';
     } else {
