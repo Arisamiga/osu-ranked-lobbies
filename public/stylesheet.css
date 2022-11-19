@@ -94,12 +94,6 @@
         border-right-color: #ea580c;
     }
 
-    .bt {
-        position: absolute;
-        top: 4rem;
-        right: 0.6rem;
-    }
-
     .default-btn {
         @apply text-white bg-orange-600 hover:bg-orange-500 rounded-lg py-1.5 px-3;
     }
