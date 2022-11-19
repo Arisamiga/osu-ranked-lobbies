@@ -94,22 +94,13 @@
         border-right-color: #ea580c;
     }
 
-    .default-btn {
-        @apply text-white bg-orange-600 hover:bg-orange-500 rounded-lg py-1.5 px-3;
-    }
-}
-@media (max-width: 500px) {
-    .p-8 {
-        padding: 2rem;
-        padding-top: 4rem;
-    }
     .bt {
         position: absolute;
         top: 4rem;
         right: 0.6rem;
     }
-    .h-24 {
-        margin-top: 1rem;
-        height: 3rem;
+
+    .default-btn {
+        @apply text-white bg-orange-600 hover:bg-orange-500 rounded-lg py-1.5 px-3;
     }
 }
