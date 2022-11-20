@@ -126,7 +126,7 @@ async function create_lobby_if_needed() {
       lobby.data.nb_non_repeating = 100;
       lobby.data.pp_closeness = 50;
       lobby.data.elo_closeness = 100;
-      await init_ranked_lobby(lobby);
+      await init_lobby(lobby);
     } catch (err) {
       // Don't care about errors here.
       console.error(err);
