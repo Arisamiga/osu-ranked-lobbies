@@ -40,19 +40,19 @@ async function set_new_title(lobby) {
     stars = `${fancy_min_stars}-${fancy_max_stars}`;
   }
 
-  new_title.replaceAll('$min_stars', fancy_min_stars);
-  new_title.replaceAll('$avg_stars', Math.round(lobby.data.avg_stars * 10) / 10);
-  new_title.replaceAll('$max_stars', fancy_max_stars);
-  new_title.replaceAll('$min_elo', Math.round(lobby.data.min_elo));
-  new_title.replaceAll('$avg_elo', Math.round(lobby.data.avg_elo));
-  new_title.replaceAll('$max_elo', Math.round(lobby.data.max_elo));
-  new_title.replaceAll('$elo', Math.round(lobby.data.avg_elo));
-  new_title.replaceAll('$min_pp', Math.round(lobby.data.min_pp));
-  new_title.replaceAll('$avg_pp', Math.round(lobby.data.avg_pp));
-  new_title.replaceAll('$max_pp', Math.round(lobby.data.max_pp));
-  new_title.replaceAll('$pp', Math.round(lobby.data.avg_pp));
-  new_title.replaceAll('$stars', stars);
-  new_title.replaceAll('$division', get_division_from_elo(lobby.data.avg_elo, lobby.data.ruleset));
+  new_title = new_title.replaceAll('$min_stars', fancy_min_stars);
+  new_title = new_title.replaceAll('$avg_stars', Math.round(lobby.data.avg_stars * 10) / 10);
+  new_title = new_title.replaceAll('$max_stars', fancy_max_stars);
+  new_title = new_title.replaceAll('$min_elo', Math.round(lobby.data.min_elo));
+  new_title = new_title.replaceAll('$avg_elo', Math.round(lobby.data.avg_elo));
+  new_title = new_title.replaceAll('$max_elo', Math.round(lobby.data.max_elo));
+  new_title = new_title.replaceAll('$elo', Math.round(lobby.data.avg_elo));
+  new_title = new_title.replaceAll('$min_pp', Math.round(lobby.data.min_pp));
+  new_title = new_title.replaceAll('$avg_pp', Math.round(lobby.data.avg_pp));
+  new_title = new_title.replaceAll('$max_pp', Math.round(lobby.data.max_pp));
+  new_title = new_title.replaceAll('$pp', Math.round(lobby.data.avg_pp));
+  new_title = new_title.replaceAll('$stars', stars);
+  new_title = new_title.replaceAll('$division', get_division_from_elo(lobby.data.avg_elo, lobby.data.ruleset));
 
   if (!Config.IS_PRODUCTION) {
     new_title = 'test lobby';
