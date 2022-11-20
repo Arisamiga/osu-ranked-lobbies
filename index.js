@@ -99,10 +99,10 @@ async function main() {
 async function create_lobby_if_needed() {
   let i = 0;
   const lobbies_to_create = [
-    {ruleset: 0, slug: 'std', title: '$stars* | o!RL standard (!info)'},
-    {ruleset: 1, slug: 'taiko', title: '$stars* | o!RL taiko (!info)'},
-    {ruleset: 2, slug: 'catch', title: '$stars* | o!RL catch (!info)'},
-    {ruleset: 3, slug: 'mania', title: '$stars* | o!RL mania 4k (!info)'},
+    {ruleset: 0, slug: 'std', title: '$avg_stars* | o!RL standard (!info)'},
+    {ruleset: 1, slug: 'taiko', title: '$avg_stars* | o!RL taiko (!info)'},
+    {ruleset: 2, slug: 'catch', title: '$avg_stars* | o!RL catch (!info)'},
+    {ruleset: 3, slug: 'mania', title: '$avg_stars* | o!RL mania 4k (!info)'},
   ];
   for (const to_create of lobbies_to_create) {
     const already_created = bancho._lobbies.some((lobby) => lobby.data.slug == to_create.slug);
