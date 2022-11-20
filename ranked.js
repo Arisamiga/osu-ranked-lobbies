@@ -276,7 +276,7 @@ async function init_lobby(lobby) {
   if (!lobby.data.nb_non_repeating) lobby.data.nb_non_repeating = 100;
   if (! lobby.data.pp_closeness) lobby.data.pp_closeness = 50;
   if (!lobby.data.elo_closeness) lobby.data.elo_closeness = 100;
-  if (!lobby.data.title) lobby.data.title = '$stars* | o!RL (!info)';
+  if (!lobby.data.title) lobby.data.title = '$avg_stars* | o!RL (!info)';
 
   lobby.match_participants = [];
 
@@ -440,6 +440,7 @@ async function init_lobby(lobby) {
     // Lobbies are ScoreV1 - but we ignore the results and get the full score info from osu's API.
     await lobby.send(`!mp set 0 0 16`);
 
+    update_map_selection_query(lobby);
     await set_new_title(lobby);
   } else {
     let restart_msg = 'restarted';

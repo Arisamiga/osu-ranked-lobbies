@@ -112,6 +112,7 @@ async function create_lobby_if_needed() {
       console.log('Creating new lobby...');
       const lobby = await bancho.make(`New o!RL lobby ${i++}`);
       lobby.created_just_now = true;
+      lobby.data.title = to_create.title;
       lobby.data.creator = Config.osu_username;
       lobby.data.creator_id = Config.osu_id;
       lobby.data.ruleset = to_create.ruleset;
