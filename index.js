@@ -99,10 +99,10 @@ async function main() {
 async function create_lobby_if_needed() {
   let i = 0;
   const lobbies_to_create = [
-    {ruleset: 0, slug: 'std', title: 'o!RL standard (!info)'},
-    {ruleset: 1, slug: 'taiko', title: 'o!RL taiko (!info)'},
-    {ruleset: 2, slug: 'catch', title: 'o!RL catch (!info)'},
-    {ruleset: 3, slug: 'mania', title: 'o!RL mania 4k (!info)'},
+    {ruleset: 0, slug: 'std', title: '$stars* | o!RL standard (!info)'},
+    {ruleset: 1, slug: 'taiko', title: '$stars* | o!RL taiko (!info)'},
+    {ruleset: 2, slug: 'catch', title: '$stars* | o!RL catch (!info)'},
+    {ruleset: 3, slug: 'mania', title: '$stars* | o!RL mania 4k (!info)'},
   ];
   for (const to_create of lobbies_to_create) {
     const already_created = bancho._lobbies.some((lobby) => lobby.data.slug == to_create.slug);
@@ -116,6 +116,16 @@ async function create_lobby_if_needed() {
       lobby.data.creator_id = Config.osu_id;
       lobby.data.ruleset = to_create.ruleset;
       lobby.data.slug = to_create.slug;
+      lobby.data.map_selection_algo = 'pp';
+      lobby.data.map_pool = 'leaderboarded';
+      lobby.data.mods = 0;
+      lobby.data.mod_list = [];
+      lobby.data.filter_query = '1';
+      lobby.data.min_stars = 3;
+      lobby.data.max_stars = 11;
+      lobby.data.nb_non_repeating = 100;
+      lobby.data.pp_closeness = 50;
+      lobby.data.elo_closeness = 100;
       await init_ranked_lobby(lobby);
     } catch (err) {
       // Don't care about errors here.
