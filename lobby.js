@@ -50,8 +50,8 @@ class BanchoLobby extends EventEmitter {
     if (line == `:${Config.osu_username}!cho@ppy.sh PART :${this.channel}`) {
       this.joined = false;
       db.prepare(`UPDATE match SET end_time = ? WHERE match_id = ?`).run(Date.now(), this.id);
-      bancho._lobbies.splice(bancho._lobbies.indexOf(this), 1);
-      bancho.joined_lobbies.splice(bancho.joined_lobbies.indexOf(this), 1);
+      bancho._lobbies = bancho._lobbies.filter((lobby) => lobby.id != this.id);
+      bancho.joined_lobbies = bancho.joined_lobbies.filter((lobby) => lobby.id != this.id);
       this.emit('close');
       return;
     }
@@ -254,7 +254,7 @@ class BanchoLobby extends EventEmitter {
         const match = cmd.regex.exec(message);
         if (!match) continue;
 
-        if (!cmd.modes.includes(this.data.type)) break;
+        if (!cmd.modes.includes('lobby')) break;
 
         if (cmd.creator_only) {
           const user_is_host = this.host && this.host.irc_username == source;

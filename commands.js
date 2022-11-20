@@ -2,42 +2,8 @@ import {osu_fetch} from './api.js';
 import bancho from './bancho.js';
 import db from './database.js';
 import {get_user_ranks} from './glicko.js';
-import {load_collection, init_lobby as init_collection_lobby} from './collection.js';
-import {init_lobby as init_ranked_lobby} from './ranked.js';
 import Config from './util/config.js';
 
-
-// TODO: !good / !bad map rating commands
-
-async function stars_command(msg, match, lobby) {
-  const args = msg.message.split(' ');
-
-  // No arguments: remove star rating restrictions
-  if (args.length == 1) {
-    lobby.data.min_stars = 3.0;
-    lobby.data.max_stars = 11.0;
-    lobby.data.fixed_star_range = false;
-    await lobby.select_next_map();
-    return;
-  }
-
-  if (args.length < 3) {
-    await lobby.send(msg.from + ': You need to specify minimum and maximum star values.');
-    return;
-  }
-
-  const min_stars = parseFloat(args[1]);
-  const max_stars = parseFloat(args[2]);
-  if (isNaN(min_stars) || isNaN(max_stars) || min_stars >= max_stars || min_stars < 0 || max_stars > 99) {
-    await lobby.send(msg.from + ': Please use valid star values.');
-    return;
-  }
-
-  lobby.data.min_stars = min_stars;
-  lobby.data.max_stars = max_stars;
-  lobby.data.fixed_star_range = true;
-  await lobby.select_next_map();
-}
 
 async function reply(user, lobby, message) {
   if (lobby) {
@@ -45,57 +11,6 @@ async function reply(user, lobby, message) {
   } else {
     await bancho.privmsg(user, message);
   }
-}
-
-async function join_command(msg, match) {
-  try {
-    const lobby = await bancho.join('#mp_' + match[1]);
-    lobby.data.creator = msg.from;
-    lobby.data.creator_id = await bancho.whois(msg.from);
-    await lobby.send(`Hi! Type '!ranked <ruleset>' to start a ranked lobby, or '!collection <id>' to load a collection from osu!collector.`);
-  } catch (err) {
-    await bancho.privmsg(
-        msg.from,
-        `Failed to join the lobby. Make sure you have sent '!mp addref ${Config.osu_username}' in #multiplayer and that the lobby ID is correct.`,
-    );
-  }
-}
-
-
-async function collection_command(msg, match, lobby) {
-  lobby.data.collection_id = match[1];
-  if (lobby.data.type == 'new') {
-    await init_collection_lobby(lobby);
-  } else {
-    try {
-      await load_collection(lobby, match[1]);
-    } catch (err) {
-      await lobby.send(`Failed to load collection: ${err.message}`);
-      throw err;
-    }
-  }
-}
-
-async function ranked_command(msg, match, lobby) {
-  const ruleset_name = match[1];
-
-  let ruleset_id;
-  if (ruleset == 'osu') {
-    ruleset_id = 0;
-  } else if (ruleset == 'taiko') {
-    ruleset_id = 1;
-  } else if (ruleset == 'catch' || ruleset == 'fruits') {
-    ruleset_id = 2;
-  } else if (ruleset == 'mania' || ruleset == '4k') {
-    ruleset_id = 3;
-  } else {
-    await reply(msg.from, lobby, `Invalid ruleset "${ruleset_name}". Please choose one of "osu", "taiko", "catch" or "mania".`);
-    return;
-  }
-
-  lobby.created_just_now = true;
-  lobby.data.ruleset = ruleset_id;
-  await init_ranked_lobby(lobby);
 }
 
 
@@ -168,13 +83,7 @@ async function wait_command(msg, match, lobby) {
 
 async function about_command(msg, match, lobby) {
   if (lobby) {
-    if (lobby.data.type == 'collection') {
-      await lobby.send(`This lobby will auto-select maps of a specific collection from osu!collector. More info: ${Config.website_base_url}/faq/`);
-    } else if (lobby.data.type == 'ranked') {
-      await lobby.send(`In this lobby, you get a rank based on how often you pass maps with 95% accuracy. More info: ${Config.website_base_url}/faq/`);
-    } else {
-      await lobby.send(`Bruh just send !collection <id> or !ranked <ruleset>`);
-    }
+    await lobby.send(`In this lobby, you get a rank based on how often you pass maps with 95% accuracy. More info: ${Config.website_base_url}/faq/`);
   } else {
     await bancho.privmsg(msg.from, `${Config.website_base_url}/faq/`);
   }
@@ -256,6 +165,19 @@ async function skip_command(msg, match, lobby) {
     }
   }
 
+  // Skip map if player is lobby creator
+  let user_is_creator = false;
+  for (const player of lobby.players) {
+    if (player.irc_username == msg.from) {
+      user_is_creator = player.user_id == lobby.data.creator_id;
+      break;
+    }
+  }
+  if (user_is_creator) {
+    await lobby.select_next_map();
+    return;
+  }
+
   // Skip map if player has been in the lobby long enough
   for (const player of lobby.players) {
     if (player.irc_username == msg.from) {
@@ -280,106 +202,76 @@ async function skip_command(msg, match, lobby) {
 
 const commands = [
   {
-    regex: /!join (\d+)/i,
-    handler: join_command,
-    creator_only: false,
-    modes: ['pm'],
-  },
-  {
-    regex: /!collection (\d+)/i,
-    handler: collection_command,
-    creator_only: true,
-    modes: ['new', 'collection'],
-  },
-  {
-    regex: /!ranked (.+)/i,
-    handler: ranked_command,
-    creator_only: true,
-    modes: ['new'],
-  },
-  {
     regex: /^!about$/i,
     handler: about_command,
     creator_only: false,
-    modes: ['pm', 'new', 'collection', 'ranked'],
+    modes: ['pm', 'lobby'],
   },
   {
     regex: /^!info/i,
     handler: about_command,
     creator_only: false,
-    modes: ['pm', 'new', 'collection', 'ranked'],
+    modes: ['pm', 'lobby'],
   },
   {
     regex: /^!help$/i,
     handler: about_command,
     creator_only: false,
-    modes: ['pm', 'new', 'collection', 'ranked'],
+    modes: ['pm', 'lobby'],
   },
   {
     regex: /^!discord$/i,
     handler: discord_command,
     creator_only: false,
-    modes: ['pm', 'new', 'collection', 'ranked'],
+    modes: ['pm', 'lobby'],
   },
   {
     regex: /^!rank(.*)/i,
     handler: rank_command,
     creator_only: false,
-    modes: ['pm', 'new', 'collection', 'ranked'],
+    modes: ['pm', 'lobby'],
   },
   {
     regex: /^!abort$/i,
     handler: abort_command,
     creator_only: false,
-    modes: ['collection', 'ranked'],
+    modes: ['lobby'],
   },
   {
     regex: /^!start$/i,
     handler: start_command,
     creator_only: false,
-    modes: ['collection', 'ranked'],
+    modes: ['lobby'],
   },
   {
     regex: /^!wait$/i,
     handler: wait_command,
     creator_only: false,
-    modes: ['collection', 'ranked'],
+    modes: ['lobby'],
   },
   {
     regex: /^!stop$/i,
     handler: wait_command,
     creator_only: false,
-    modes: ['collection', 'ranked'],
+    modes: ['lobby'],
   },
   {
     regex: /^!ban(.*)/i,
     handler: ban_command,
     creator_only: false,
-    modes: ['ranked'],
+    modes: ['lobby'],
   },
   {
     regex: /^!kick(.*)/i,
     handler: ban_command,
     creator_only: false,
-    modes: ['ranked'],
+    modes: ['lobby'],
   },
   {
     regex: /^!skip$/i,
     handler: skip_command,
     creator_only: false,
-    modes: ['collection', 'ranked'],
-  },
-  {
-    regex: /^!stars/i,
-    handler: stars_command,
-    creator_only: true,
-    modes: ['ranked'],
-  },
-  {
-    regex: /^!setstar/i,
-    handler: stars_command,
-    creator_only: true,
-    modes: ['ranked'],
+    modes: ['lobby'],
   },
 ];
 

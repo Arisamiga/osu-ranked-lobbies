@@ -32,9 +32,6 @@ const RANK_DIVISIONS = [
 ];
 
 
-// TODO: move to postgresql before deploy?
-
-
 function save_rating_to_db(rating) {
   rating.elo = (rating.current_mu * 173.7178 + 1500 - 3 * rating.current_sig * 173.7178);
 
@@ -76,7 +73,7 @@ function save_rating_to_db(rating) {
 // https://forums.online-go.com/t/ogs-has-a-new-glicko-2-based-rating-system/13058
 //
 // NOTE: ratings have additional temporary "won" and "score_id" fields
-async function update_rating(entity, ratings, is_player) {
+async function update_rating(lobby, entity, ratings, is_player) {
   if (ratings.length == 0) return;
 
   let i = 0;
@@ -86,9 +83,20 @@ async function update_rating(entity, ratings, is_player) {
     if (!Array.isArray(score.mods)) {
       score.mods = JSON.parse(score.mods);
     }
-    const allowed_mods = ['HD', 'HR', 'SD', 'PF', 'DT', 'NC', 'FI', 'FL', 'MR', 'CO'];
+
+    const allowed_mods = ['HD', 'HR', 'SD', 'PF', 'DT', 'NC', 'HT', 'FI', 'FL', 'MR', 'CO'];
     let ignore_score = false;
     for (const mod of score.mods) {
+      // EZ is allowed, but only when the whole lobby is using it
+      if (mod == 'EZ') {
+        if (lobby.data.mods == 0) {
+          ignore_score = true;
+          break;
+        }
+
+        continue;
+      }
+
       if (allowed_mods.indexOf(mod) == -1) {
         ignore_score = true;
         break;
@@ -219,7 +227,7 @@ async function save_game_and_update_rating(lobby, game) {
     WHERE score.beatmap_id = ? AND score.rowid > ?
     ORDER BY score.rowid ASC`,
   ).all(game.beatmap.id, map_rating.base_score_id);
-  await update_rating(map_rating, scores, false);
+  await update_rating(lobby, map_rating, scores, false);
 
   // Update player ratings
   for (const score of game.scores) {
@@ -233,7 +241,7 @@ async function save_game_and_update_rating(lobby, game) {
       INNER JOIN score ON user.user_id = score.user_id
       WHERE score.user_id = ? AND score.rowid > ?`,
     ).all(score.user_id, user_rating.base_score_id);
-    await update_rating(user_rating, maps, true);
+    await update_rating(lobby, user_rating, maps, true);
   }
 
   // Usually, we're in a live lobby, but sometimes we're just recomputing
@@ -319,6 +327,13 @@ function get_rank_text(rank_float, nb_scores) {
 }
 
 
+function get_division_from_elo(elo, mode) {
+  const all = db.prepare(`SELECT COUNT(*) FROM rating WHERE mode = ?`).get(mode);
+  const better = db.prepare(`SELECT COUNT(*) FROM rating WHERE mode = ? AND elo > ?`).get(mode, elo);
+  return get_rank_text(1.0 - (better / all), 5);
+}
+
+
 function get_map_rank(map_id) {
   const res = db.prepare(`
     SELECT nb_scores, elo, map.mode AS mode
@@ -398,4 +413,4 @@ function get_user_ranks(user_id) {
   ];
 }
 
-export {save_game_and_update_rating, get_map_rank, get_user_ranks, update_rating};
+export {save_game_and_update_rating, get_map_rank, get_user_ranks, update_rating, get_division_from_elo};

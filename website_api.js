@@ -13,14 +13,131 @@ import Config from './util/config.js';
 import bancho from './bancho.js';
 import db from './database.js';
 import {get_user_ranks} from './glicko.js';
-import {init_lobby as init_ranked_lobby} from './ranked.js';
-import {init_lobby as init_collection_lobby} from './collection.js';
+import {init_lobby} from './ranked.js';
 
 
 const USER_NOT_FOUND = new Error('User not found. Have you played a game in a ranked lobby yet?');
 USER_NOT_FOUND.http_code = 404;
 const RULESET_NOT_FOUND = new Error('Ruleset not found. Must be one of "osu", "taiko", "catch" or "mania".');
 RULESET_NOT_FOUND.http_code = 404;
+
+
+function mods_to_flags(mod_list) {
+  let flags = 0;
+
+  for (const mod of mod_list) {
+    if (mod == 'NM') return 'none';
+    if (mod == 'EZ') flags |= 2;
+    if (mod == 'HD') flags |= 8;
+    if (mod == 'HR') flags |= 16;
+    if (mod == 'SD') flags |= 32;
+    if (mod == 'DT') flags |= 64;
+    if (mod == 'NC') flags |= 64 | 512;
+    if (mod == 'HT') flags |= 256;
+    if (mod == 'FL') flags |= 1024;
+    if (mod == 'FI') flags |= 1048576;
+    if (mod == 'CO') flags |= 33554432;
+    if (mod == 'MR') flags |= 1073741824;
+  }
+  if ((flags & 64) && (flags & 256)) {
+    throw new Error('Invalid mod combination');
+  }
+  if ((flags & 2) && (flags & 16)) {
+    throw new Error('Invalid mod combination');
+  }
+
+  return flags;
+}
+
+function flags_to_mods(flags) {
+  if (flags == 'none') return ['NM'];
+
+  const mods = [];
+  if (flags & 2) mods.push('EZ');
+  if (flags & 8) mods.push('HD');
+  if (flags & 16) mods.push('HR');
+  if (flags & 32) mods.push('SD');
+  if ((flags & 64) && !(flags & 512)) mods.push('DT');
+  if (flags & 512) mods.push('NC');
+  if (flags & 256) mods.push('HT');
+  if (flags & 1024) mods.push('FL');
+  if (flags & 1048576) mods.push('FI');
+  if (flags & 33554432) mods.push('CO');
+  if (flags & 1073741824) mods.push('MR');
+
+  return mods;
+}
+
+
+function validate_lobby_settings(settings) {
+  settings.ruleset = parseInt(settings.ruleset, 10);
+  if (![0, 1, 2, 3].includes(settings.ruleset)) {
+    throw new Error('Invalid ruleset');
+  }
+  if (!['random', 'pp', 'elo'].includes(settings.map_selection_algo)) {
+    throw new Error('Invalid map selection');
+  }
+  if (!['leaderboarded', 'collection'].includes(settings.map_pool)) {
+    throw new Error('Invalid map pool');
+  }
+  if (settings.map_pool == 'collection' && isNaN(parseInt(settings.collection_id, 10))) {
+    throw new Error('Invalid collection url');
+  }
+
+  settings.mods = mods_to_flags(settings.mod_list);
+  settings.mod_list = flags_to_mods(settings.mods);
+  if (settings.mods != 'none') {
+    // Unflag NC - we use the flags for pp search, and DT is used instead
+    settings.mods = settings.mods & ~(512);
+  }
+
+  settings.min_stars = 0;
+  settings.max_stars = 11;
+  settings.filter_query = '1';
+  for (const filter of settings.filters) {
+    const valid = ['pp', 'sr', 'length', 'ar', 'cs', 'od', 'bpm'];
+    if (!valid.includes(filter.name)) {
+      throw new Error(`Invalid filter '${filter.name}'`);
+    }
+    if (filter.name == 'cs' && (settings.ruleset == 1 || settings.ruleset == 3)) {
+      throw new Error(`CS illegal for taiko/mania`);
+    }
+
+    filter.min = parseFloat(filter.min, 10);
+    filter.max = parseFloat(filter.max, 10);
+    if (isNaN(filter.min)) {
+      throw new Error(`Invalid minimum value for filter '${filter.name}'`);
+    }
+    if (isNaN(filter.max)) {
+      throw new Error(`Invalid maximum value for filter '${filter.name}'`);
+    }
+
+    if (filter.name == 'sr') {
+      filter.name = 'stars';
+      settings.min_stars = filter.min;
+      settings.max_stars = filter.max;
+    }
+
+    settings.filter_query += ` AND ${filter.name} >= ${filter.min} AND ${filter.name} <= ${filter.max}`;
+  }
+
+  if (settings.ruleset == 3) {
+    let key_query = '0';
+    for (const key of settings.key_count) {
+      const key_int = parseInt(key, 10);
+      if (isNaN(key_int)) {
+        throw new Error('Invalid key count');
+      }
+
+      key_query += ` OR cs = ${key_int}`;
+    }
+    if (key_query == '0') {
+      throw new Error('You must select one or more key counts');
+    }
+
+    settings.filter_query += ` AND (${key_query})`;
+  }
+}
 
 
 function ruleset_to_mode(ruleset) {
@@ -201,11 +318,12 @@ async function register_routes(app) {
     const lobbies = [];
 
     for (const lobby of bancho.joined_lobbies) {
+      if (lobby.passworded) continue;
+
       lobbies.push({
         bancho_id: lobby.invite_id,
         nb_players: lobby.players.length,
         name: lobby.name,
-        mode: lobby.data.type,
         ruleset: lobby.data.ruleset,
         scorev2: lobby.data.is_scorev2,
         creator_name: lobby.data.creator,
@@ -233,11 +351,7 @@ async function register_routes(app) {
       }
     }
 
-    const ruleset_id = parseInt(req.body.ruleset, 10);
-    if (isNaN(ruleset_id) || ruleset_id < 0 || ruleset_id > 3) {
-      http_res.status(401).json({error: 'Invalid ruleset.'});
-      return;
-    }
+    validate_lobby_settings(req.body);
 
     let user = db.prepare(`SELECT username FROM user WHERE user_id = ?`).get(req.user_id);
     if (!user) {
@@ -271,27 +385,28 @@ async function register_routes(app) {
       lobby.created_just_now = true;
       lobby.data.creator = user.username;
       lobby.data.creator_id = req.user_id;
-      lobby.data.ruleset = parseInt(req.body.ruleset, 10);
-
-      if (req.body.star_rating == 'fixed') {
-        lobby.data.min_stars = req.body.min_stars;
-        lobby.data.max_stars = req.body.max_stars;
-        lobby.data.fixed_star_range = true;
-      } else {
-        lobby.data.fixed_star_range = false;
-      }
-
-      if (req.body.type == 'ranked') {
-        await init_ranked_lobby(lobby);
-      } else {
-        if (req.body.title) {
-          await lobby.send(`!mp name ${req.body.title}`);
-          lobby.name = req.body.title;
-        }
-
+      lobby.data.ruleset = req.body.ruleset;
+      lobby.data.map_selection_algo = req.body.map_selection_algo;
+      lobby.data.map_pool = req.body.map_pool;
+      if (lobby.data.map_pool == 'collection') {
         lobby.data.collection_id = req.body.collection_id;
-        await init_collection_lobby(lobby);
       }
+      lobby.data.mods = req.body.mods;
+      lobby.data.mod_list = req.body.mod_list;
+      lobby.data.filter_query = req.body.filter_query;
+      lobby.data.min_stars = req.body.min_stars;
+      lobby.data.max_stars = req.body.max_stars;
+
+      // TODO: make this customizable
+      lobby.data.nb_non_repeating = 100;
+
+      // TODO: make this customizable
+      lobby.data.pp_closeness = 50;
+
+      // TODO: make this customizable
+      lobby.data.elo_closeness = 100;
+
+      await init_lobby(lobby);
     } catch (err) {
       http_res.status(503).json({error: 'An error occurred while creating the lobby', details: err.message});
       return;
@@ -303,7 +418,6 @@ async function register_routes(app) {
         bancho_id: lobby.invite_id,
         nb_players: lobby.players.length,
         name: lobby.name,
-        mode: lobby.data.type,
         scorev2: lobby.data.is_scorev2,
         creator_name: lobby.data.creator,
         creator_id: lobby.data.creator_id,

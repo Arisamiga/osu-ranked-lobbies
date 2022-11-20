@@ -72,9 +72,9 @@
     <template id="FAQ-template">
       <div class="max-w-5xl m-auto">
         <h2 class="mb-2 underline">Frequently Asked Questions</h2>
-        <h3 class="mt-1">When do I get a rank?</h3>
-        You get a rank after playing 5 games in a ranked lobby. To have it visible in this Discord server, you need to link your account in welcome.
-        <h3 class="mt-1">What are the ranks?</h3>
+        <h3 class="mt-2">When do I get a rank?</h3>
+        You get a rank after playing 5 games in a ranked lobby. To have it visible in this Discord server, you need to link your account in #welcome.
+        <h3 class="mt-2">What are the ranks?</h3>
         <table class="mt-1 mb-2">
           <thead>
             <tr><th class="border border-zinc-700 p-1.5">Division</th><th class="border border-zinc-700 p-1.5">Placement</th></tr>
@@ -91,26 +91,30 @@
             <tr><td class="border border-zinc-700 p-1.5 cardboard">Cardboard</td><td class="border border-zinc-700 p-1.5">Bottom 8.6%</td></tr>
           </tbody>
         </table>
-        <h3 class="mt-1">How do the ranks work?</h3>
+        <h3 class="mt-2">How do the ranks work?</h3>
         When you pass a map with 95% accuracy, you gain rank. When you don't, you lose rank. How much you gain or lose depends on your rank underline, as well as how hard the map is.
-        <h3 class="mt-1">Will mods make me rank up faster?</h3>
-        No. Using difficulty-reducing mods will invalidate your score; only HD, HR, MR/CO, SD/PF, FI/FL are allowed.
-        <h3 class="mt-1">How are the maps chosen?</h3>
+        <h3 class="mt-2">What mods are allowed?</h3>
+        <ul>
+          <li>Difficulty-increasing: HD, HR, FI, FL</li>
+          <li>Difficulty-reducing, when applied to entire lobby (not freemod): EZ</li>
+          <li>Speed-adjusting: DT, NC, HT</li>
+          <li>Misc: MR, CO, SD</li>
+        </ul>
+        Using any other mods will invalidate your score. Using additional mods doesn't make you rank up faster.
+        <h3 class="mt-2">How are the maps chosen?</h3>
         Maps are picked to best fit your current skill level.
-        <h3 class="mt-1"> What's the map pool?</h3>
+        <h3 class="mt-2"> What's the map pool?</h3>
         Initially, the map pool consists of collections from map-pool. Over time, it expands to cover the entirety of osu! maps with a leaderboard (about 130k maps).
-        <h3 class="mt-1">Why is the star rating different from the title of the lobby?</h3>
+        <h3 class="mt-2">Why is the star rating different from the title of the lobby?</h3>
         Some maps are much easier/harder than their star rating represents. Also, the star rating shown by the client in multi lobbies is different from the current one (as shown on the osu! website).
-        <h3 class="mt-1">Why isn't the game starting when all players are ready?</h3>
+        <h3 class="mt-2">Why isn't the game starting when all players are ready?</h3>
         That happens the last person that wasn't ready leaves. Anyone can unready and re-ready to start the game immediately. (I can't fix this bug, it comes from BanchoBot itself.)'
-        <h3 class="mt-1">Can I see the source code?</h3>
+        <h3 class="mt-2">Can I see the source code?</h3>
         Yes: <a href="https://github.com/kiwec/osu-ranked-lobbies" target="_blank">https://github.com/kiwec/osu-ranked-lobbies</a>
 
-        <h2 class="mb-2 mt-8 underline">Commands for ranked lobbies</h3>
-        <div class="ranked"></div>
+        <h2 class="mb-2 mt-8 underline">Command list</h3>
+        <div class="command-list"></div>
         <div>
-        <h2 class="mb-2 mt-8 underline">Commands for unranked lobbies</h3>
-        <div class="unranked"></div>
       </div>
     </template>
 
@@ -164,51 +168,32 @@
       </div>
     </template>
 
-    <template id="ranked-command-list-template">
+    <template id="command-list-template">
       <div class="command-list">
         <ul>
           <li>
             !info or !discord - Display some information for new players.
-            </li>
-            <li>
-              !start -  Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
-            </li>
-            <li>
-              !wait - Cancel !start. Use it when you're not done downloading.
-            </li>
-            <li>
-              !skip - Skip current map. You must have played 5 games in the lobby to unlock the command.
-            </li>
-            <li>
-              !abort - Vote to abort the match. At least 1/4 of the lobby must vote to abort for a match to get aborted.
-            </li>
-            <li>
-              !ban (player) - Vote to ban a player. You should probably use the in-game ignoring and reporting features instead.
-            </li>
-            <li>
-              !rank (player) - Display your rank or the rank of another player.
-            </li>
-        </ul>
-      </div>
-    </template>
-
-    <template id="unranked-command-list-template">
-      <div class="command-list">
-        <ul>
-          <li>
-            !collection (id) -  Switches to another collection. Only the lobby creator can use this command.
           </li>
           <li>
-            !start - Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
+            !start -  Count down 30 seconds then start the map. Useful when some players are AFK or forget to ready up. Anybody can use this command.
           </li>
           <li>
             !wait - Cancel !start. Use it when you're not done downloading.
           </li>
           <li>
-            !abort - Vote to abort the match. At least half the players in the lobby must vote to abort for a match to get aborted.
+            !skip - Skip current map. You must have played 5 games in the lobby to unlock the command.
           </li>
           <li>
-            !skip - Vote to skip the current map. At least half the players in the lobby must vote to skip for a map to get skipped.
+            !abort - Vote to abort the match. At least 1/4 of the lobby must vote to abort for a match to get aborted.
+          </li>
+          <li>
+            !kick (player) - Vote to kick a player. You should probably use the in-game ignoring and reporting features instead.
+          </li>
+          <li>
+            !rank (player) - Display your rank or the rank of another player.
+          </li>
+          <li>
+            !mp close - Close the lobby. Only the lobby creator can use this command.
           </li>
         </ul>
       </div>
@@ -219,54 +204,250 @@
         <h1 class="mb-6 font-bold">New lobby</h1>
 
         <div class="lobby-settings">
-          <h3 class="underline mb-4">Lobby type</h3>
-          <!-- TODO: on firefox, cursor isn't "pointer" when hovering .radio; even worse, clicking .radio doesn't change the lobby type! -->
-          <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
-            <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="lobby-type" value="ranked" checked></div>
-            <div class="info py-2 px-3 leading-5">
-              <span class="font-bold">Ranked</span>
-              <p>Map is selected automatically. Scores set in this lobby will appear on the o!RL leaderboard.</p>
+          <h3 class="underline mb-1">Title</h3>
+          <p>You can use <span class="mono">$min_xxx</span>, <span class="mono">$avg_xxx</span>, <span class="mono">$max_xxx</span> for <span class="mono">elo</span>, <span class="mono">pp</span> and <span class="mono">stars</span> to set the lobby title automatically.</p>
+          <input class="mt-1 mb-1 p-1 w-72 text-sm" type="text" name="title" value="$min_stars-$max_stars* | o!RL (!info)">
+          <p>Preview: <span class="mono preview">0-11* | o!RL (!info)</span></p>
+
+          <div class="flex mt-2 cursor-pointer select-none">
+            <div class="collapser"></div>
+            <h3 class="underline">Map selection</h3>
+          </div>
+          <div class="hidden mb-4">
+            <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
+              <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="map-selection-type" value="random" checked></div>
+              <div class="info py-2 px-3 leading-5">
+                <span class="font-bold">Random</span>
+                <p>Pick any map that matches the given filters.</p>
+              </div>
+            </div>
+            <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
+              <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="map-selection-type" value="pp"></div>
+              <div class="info py-2 px-3 leading-5">
+                <span class="font-bold">Performance Points</span>
+                <p>Pick maps close to the lobby players's pp.</p>
+              </div>
+            </div>
+            <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
+              <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="map-selection-type" value="elo"></div>
+              <div class="info py-2 px-3 leading-5">
+                <span class="font-bold">Elo (inaccurate - not recommended)</span>
+                <p>Pick maps close to the lobby players's elo.</p>
+              </div>
             </div>
           </div>
-          <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
-            <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="lobby-type" value="custom"></div>
-            <div class="info py-2 px-3 leading-5">
-              <span class="font-bold">Custom</span>
-              <p>Personalized map selection, but scores set in this lobby will not change your o!RL rank.</p>
+
+          <div class="flex mt-2 cursor-pointer select-none">
+            <div class="collapser"></div>
+            <h3 class="underline">Map pool</h3>
+          </div>
+          <div class="hidden mb-4">
+            <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
+              <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="map-pool" value="leaderboarded" checked></div>
+              <div class="info py-2 px-3 leading-5">
+                <span class="font-bold">All Ranked + Loved + Qualified + Pending maps</span>
+                <p>F2 gaming.</p>
+              </div>
+            </div>
+            <div class="radio-area flex border-2 border-orange-600 hover:bg-zinc-700 rounded-md m-1 max-w-xl cursor-pointer">
+              <div class="radio flex align-center justify-center p-1.5 bg-orange-600"><input type="radio" name="map-pool" value="collection"></div>
+              <div class="info py-2 px-3 leading-5">
+                <span class="font-bold">Custom <a href="https://osucollector.com/" target="_blank">osu!collector</a> collection</span>
+                <input class="mt-1 p-1 w-72 text-sm" type="text" name="collection-url" placeholder="https://osucollector.com/collections/44">
+              </div>
             </div>
           </div>
 
-          <h3 class="underline mt-4 mb-2">Star rating</h3>
-          <div>
-            <label>
-              <input type="checkbox" name="auto-star-rating" checked>
-              Automatically choose star rating based on lobby players
-            </label>
-          </div>
-          <div class="star-rating-range mb-2" hidden>
-            <label>
-              <input class="p-1 w-20 text-center text-black mt-2 mr-1" type="number" min="0" max="11" value="4.0" step="0.1" name="min-stars">
-              Minimum star level
-            </label>
-            <br>
-            <label>
-              <input class="p-1 w-20 text-center text-black mt-1 mr-1" type="number" min="0" max="11" value="5.0" step="0.1" name="max-stars">
-              Maximum star level
-            </label>
+          <div class="mod-settings">
+            <div class="flex mt-2 cursor-pointer select-none">
+              <div class="collapser"></div>
+              <h3 class="underline">Mods</h3>
+            </div>
+            <div class="hidden mb-4">
+              <div>
+                <div class="mod-btn nm">
+                  <img class="h-8" src="/images/mod_no-mod@2x.png" title="None" alt="None" />
+                  <div>NM</div>
+                </div>
+                <div class="mod-btn ez">
+                  <img class="h-8" src="/images/mod_easy@2x.png" title="Easy" alt="Easy" />
+                  <div>EZ</div>
+                </div>
+                <div class="mod-btn ht">
+                  <img class="h-8" src="/images/mod_half@2x.png" title="Half Time" alt="Half Time" />
+                  <div>HT</div>
+                </div>
+                <div class="mod-btn mr hidden">
+                  <img class="h-8" src="/images/mod_mirror@2x.png" title="Mirror" alt="Mirror" />
+                  <div>MR</div>
+                </div>
+                <div class="mod-btn co hidden">
+                  <img class="h-8" src="/images/mod_coop@2x.png" title="Co-op" alt="Co-op" />
+                  <div>CO</div>
+                </div>
+              </div>
+
+              <div>
+                <div class="mod-btn">
+                  <img class="h-8" src="/images/mod_hidden@2x.png" title="Hidden" alt="Hidden" />
+                  <div>HD</div>
+                </div>
+                <div class="mod-btn hr">
+                  <img class="h-8" src="/images/mod_hard-rock@2x.png" title="Hard Rock" alt="Hard Rock" />
+                  <div>HR</div>
+                </div>
+                <div class="mod-btn dt">
+                  <img class="h-8" src="/images/mod_double-time@2x.png" title="Double Time" alt="Double Time" />
+                  <div>DT</div>
+                </div>
+                <div class="mod-btn nc hidden">
+                  <img class="h-8" src="/images/mod_nightcore@2x.png" title="Nightcore" alt="Nightcore" />
+                  <div>NC</div>
+                </div>
+                <div class="mod-btn fi hidden">
+                  <img class="h-8" src="/images/mod_fader@2x.png" title="Fade In" alt="Fade In" />
+                  <div>FI</div>
+                </div>
+                <div class="mod-btn">
+                  <img class="h-8" src="/images/mod_flashlight@2x.png" title="Flashlight" alt="Flashlight" />
+                  <div>FL</div>
+                </div>
+                <div class="mod-btn">
+                  <img class="h-8" src="/images/mod_sudden-death@2x.png" title="Sudden Death" alt="Sudden Death" />
+                  <div>SD</div>
+                </div>
+              </div>
+              <div class="mb-4">
+                Enabling any mod (including NM) disables freemod.
+              </div>
+            </div>
           </div>
 
-          <div class="custom-settings mt-4" hidden>
-            <h3 class="underline mb-1">Title</h3>
-            <p>This is what will be shown on the website's lobby list.</p>
-            <input class="mt-1 p-1 w-72 text-sm" type="text" name="title" placeholder="New o!RL lobby">
-
-            <h3 class="underline mt-4 mb-1">Collection</h3>
-            <p>You can find or create a collection on <a href="https://osucollector.com/" target="_blank">osu!collector</a>.</p>
-            <input class="mt-1 p-1 w-72 text-sm" type="text" name="collection-url" placeholder="https://osucollector.com/collections/44">
-            <!-- TODO: More custom settings. filters, tags, etc. -->
+          <div class="flex mt-2 cursor-pointer select-none">
+            <div class="collapser"></div>
+            <h3 class="underline">Filters</h3>
+          </div>
+          <div class="hidden mb-4">
+            <div class="flex flex-wrap">
+              <div class="filter flex flex-col border-2 border-orange-600 rounded-md m-1 max-w-sm">
+                <div class="pl-2 bg-orange-600 text-white font-bold select-none">
+                  <input type="checkbox" name="pp_filter" id="pp_filter">
+                  <label class="inline-block w-80 cursor-pointer" for="pp_filter">Limit performance points (PP)</label>
+                </div>
+                <fieldset class="p-2 flex justify-evenly" disabled>
+                  <div><label for="min_pp">Minimum </label><input class="ml-1 w-16 text-right" type="number" name="min_pp" min="0" value="150" step="25" id="min_pp"></div>
+                  <div><label for="max_pp">Maximum </label><input class="ml-1 w-16 text-right" type="number" name="max_pp" min="10" value="200" step="25" id="max_pp"></div>
+                </fieldset>
+              </div>
+              <div class="filter flex flex-col border-2 border-orange-600 rounded-md m-1 max-w-sm">
+                <div class="pl-2 bg-orange-600 text-white font-bold select-none">
+                  <input type="checkbox" name="sr_filter" id="sr_filter">
+                  <label class="inline-block w-80 cursor-pointer" for="sr_filter">Limit star rating (SR)</label>
+                </div>
+                <fieldset class="p-2 flex justify-evenly" disabled>
+                  <div><label for="min_sr">Minimum </label><input class="ml-1 w-16 text-right" type="number" name="min_sr" min="0" value="5" step="0.5" id="min_sr"></div>
+                  <div><label for="max_sr">Maximum </label><input class="ml-1 w-16 text-right" type="number" name="max_sr" min="1" value="6" step="0.5" id="max_sr"></div>
+                </fieldset>
+              </div>
+              <div class="filter flex flex-col border-2 border-orange-600 rounded-md m-1 max-w-sm">
+                <div class="pl-2 bg-orange-600 text-white font-bold select-none">
+                  <input type="checkbox" name="ar_filter" id="ar_filter">
+                  <label class="inline-block w-80 cursor-pointer" for="ar_filter">Limit approach rate (AR)</label>
+                </div>
+                <fieldset class="p-2 flex justify-evenly" disabled>
+                  <div><label for="min_ar">Minimum </label><input class="ml-1 w-16 text-right" type="number" name="min_ar" min="0" max="11" value="9" step="0.1" id="min_ar"></div>
+                  <div><label for="max_ar">Maximum </label><input class="ml-1 w-16 text-right" type="number" name="max_ar" min="0" max="11" value="9.5" step="0.1" id="max_ar"></div>
+                </fieldset>
+              </div>
+              <div class="filter flex flex-col border-2 border-orange-600 rounded-md m-1 max-w-sm">
+                <div class="pl-2 bg-orange-600 text-white font-bold select-none">
+                  <input type="checkbox" name="cs_filter" id="cs_filter">
+                  <label class="inline-block w-80 cursor-pointer" for="cs_filter">Limit circle size (CS)</label>
+                </div>
+                <fieldset class="p-2 flex justify-evenly" disabled>
+                  <div><label for="min_cs">Minimum </label><input class="ml-1 w-16 text-right" type="number" name="min_cs" min="0" max="10" value="5" step="1" id="min_cs"></div>
+                  <div><label for="max_cs">Maximum </label><input class="ml-1 w-16 text-right" type="number" name="max_cs" min="0" max="10" value="6" step="1" id="max_cs"></div>
+                </fieldset>
+              </div>
+              <div class="filter flex flex-col border-2 border-orange-600 rounded-md m-1 max-w-sm">
+                <div class="pl-2 bg-orange-600 text-white font-bold select-none">
+                  <input type="checkbox" name="od_filter" id="od_filter">
+                  <label class="inline-block w-80 cursor-pointer" for="od_filter">Limit overall difficulty (OD)</label>
+                </div>
+                <fieldset class="p-2 flex justify-evenly" disabled>
+                  <div><label for="min_od">Minimum </label><input class="ml-1 w-16 text-right" type="number" name="min_od" min="0" max="10" value="6" step="1" id="min_od"></div>
+                  <div><label for="max_od">Maximum </label><input class="ml-1 w-16 text-right" type="number" name="max_od" min="0" max="10" value="8" step="1" id="max_od"></div>
+                </fieldset>
+              </div>
+              <div class="filter flex flex-col border-2 border-orange-600 rounded-md m-1 max-w-sm">
+                <div class="pl-2 bg-orange-600 text-white font-bold select-none">
+                  <input type="checkbox" name="bpm_filter" id="bpm_filter">
+                  <label class="inline-block w-80 cursor-pointer" for="bpm_filter">Limit beats per minute (BPM)</label>
+                </div>
+                <fieldset class="p-2 flex justify-evenly" disabled>
+                  <div><label for="min_bpm">Minimum </label><input class="ml-1 w-16 text-right" type="number" name="min_bpm" min="0" value="160" step="10" id="min_bpm"></div>
+                  <div><label for="max_bpm">Maximum </label><input class="ml-1 w-16 text-right" type="number" name="max_bpm" min="0" value="220" step="10" id="max_bpm"></div>
+                </fieldset>
+              </div>
+              <div class="filter flex flex-col border-2 border-orange-600 rounded-md m-1 max-w-sm">
+                <div class="pl-2 bg-orange-600 text-white font-bold select-none">
+                  <input type="checkbox" name="length_filter" id="length_filter">
+                  <label class="inline-block w-80 cursor-pointer" for="length_filter">Limit length (in seconds)</label>
+                </div>
+                <fieldset class="p-2 flex justify-evenly" disabled>
+                  <div><label for="min_length">Minimum </label><input class="ml-1 w-16 text-right" type="number" name="min_length" min="0" value="60" step="30" id="min_length"></div>
+                  <div><label for="max_length">Maximum </label><input class="ml-1 w-16 text-right" type="number" name="max_length" min="30" value="500" step="30" id="max_length"></div>
+                </fieldset>
+              </div>
+            </div>
           </div>
 
-          <button class="create-lobby-btn default-btn mt-4">Create lobby</button>
+          <div class="mania-keycount-settings hidden">
+            <div class="flex mt-2 cursor-pointer select-none">
+              <div class="collapser"></div>
+              <h3 class="underline">Key count</h3>
+            </div>
+            <div class="hidden">
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_1Kb@2x.png" title="1K" alt="1K" />
+                <div>1K</div>
+              </div>
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_2Kb@2x.png" title="2K" alt="2K" />
+                <div>2K</div>
+              </div>
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_3Kb@2x.png" title="3K" alt="3K" />
+                <div>3K</div>
+              </div>
+              <div class="mod-btn mod-btn-selected">
+                <img class="h-8" src="/images/mod_4Kb@2x.png" title="4K" alt="4K" />
+                <div>4K</div>
+              </div>
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_5Kb@2x.png" title="5K" alt="5K" />
+                <div>5K</div>
+              </div>
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_6Kb@2x.png" title="6K" alt="6K" />
+                <div>6K</div>
+              </div>
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_7Kb@2x.png" title="7K" alt="7K" />
+                <div>7K</div>
+              </div>
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_8Kb@2x.png" title="8K" alt="8K" />
+                <div>8K</div>
+              </div>
+              <div class="mod-btn">
+                <img class="h-8" src="/images/mod_9Kb@2x.png" title="9K" alt="9K" />
+                <div>9K</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="create-lobby-btn default-btn mt-8">Create lobby</button>
         </div>
 
         <div class="lobby-creation-spinner text-center mt-24" hidden>

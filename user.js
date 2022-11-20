@@ -3,8 +3,6 @@ import bancho from './bancho.js';
 import db from './database.js';
 
 
-// TODO: for mania, we need to still scan user profile top 100. because we want to filter out non-4k maps
-
 async function init_user(user_id, user_data) {
   if (!user_data) {
     const res = await osu_fetch(`https://osu.ppy.sh/api/v2/users?ids[0]=${user_id}`);

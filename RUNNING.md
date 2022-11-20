@@ -19,9 +19,9 @@ That's it! You should be able to run the website with `yarn start`.
 
 # Installation (osu!)
 
-* Download `ranks.db` [from my website](https://osu.kiwec.net/ranks.db)
+* Download `orl.db` [from my website](https://osu.kiwec.net/orl.db)
 
-It includes a map list of every ranked map. You can also initialize it yourself using [this tool](https://github.com/kiwec/orl-maps-db-generator).
+It's an SQLite database containing the list of all leaderboarded maps and the pp values for every mod combination.
 
 * Download and extract the latest `osu_files.tar.bz2` file from [data.ppy.sh](https://data.ppy.sh/) and extract the `.osu` files to the `maps/` directory
 

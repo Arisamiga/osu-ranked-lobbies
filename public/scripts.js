@@ -88,12 +88,15 @@ document.querySelectorAll('.choose-ruleset').forEach((btn) => {
     event.preventDefault();
     update_selected_ruleset(rulesets[parseInt(this.dataset.ruleset, 10)]);
 
-    let url = location.pathname;
-    for (const ruleset of rulesets) {
-      url = url.replaceAll(/\/(osu|taiko|catch|mania)/g, '/' + rulesets[selected_ruleset]);
+    const url = location.pathname;
+    const new_url = url.replaceAll(/\/(osu|taiko|catch|mania)/g, '/' + rulesets[selected_ruleset]);
+
+    if (url == new_url) {
+      location.reload();
+    } else {
+      window.history.pushState({}, '', new_url);
+      route(new_url);
     }
-    window.history.pushState({}, '', url);
-    route(url);
   });
 });
 
@@ -123,7 +126,7 @@ async function get(url) {
     credentials: 'same-origin',
   });
 
-  if (!user_id && res.headers.has('X-Osu-ID')) {
+  if (res.headers.has('X-Osu-ID')) {
     user_id = res.headers.get('X-Osu-ID');
     localStorage.setItem('user_id', user_id);
     update_header_profile();
@@ -208,10 +211,8 @@ function render_lobby(lobby) {
 async function render_faq() {
   document.title = 'FAQ - o!RL';
   const template = document.querySelector('#FAQ-template').content.cloneNode(true);
-  const ranked_template = document.querySelector('#ranked-command-list-template').content.cloneNode(true);
-  const unranked_template = document.querySelector('#unranked-command-list-template').content.cloneNode(true);
-  template.querySelector('.ranked').appendChild(ranked_template);
-  template.querySelector('.unranked').appendChild(unranked_template);
+  const commands_template = document.querySelector('#command-list-template').content.cloneNode(true);
+  template.querySelector('.command-list').appendChild(commands_template);
   document.querySelector('main').appendChild(template);
 }
 
@@ -359,21 +360,126 @@ async function route(new_url) {
     document.title = 'New lobby - o!RL';
     document.querySelector('main').innerHTML = '';
     const template = document.querySelector('#lobby-creation-template').content.cloneNode(true);
-    console.log(template);
     template.querySelector('h1').innerText = `New ${rulesets[selected_ruleset]} lobby`;
     document.querySelector('main').appendChild(template);
 
-    document.querySelector('.lobby-settings').addEventListener('change', (evt) => {
-      if (evt.target.name == 'lobby-type') {
-        const custom_settings = document.querySelector('main .custom-settings');
-        custom_settings.hidden = !custom_settings.hidden;
-      }
+    document.querySelector('input[name="title"]').addEventListener('input', (evt) => {
+      let title_preview = evt.target.value;
+      title_preview = title_preview.replaceAll('$min_stars', '0');
+      title_preview = title_preview.replaceAll('$avg_stars', '5.5');
+      title_preview = title_preview.replaceAll('$max_stars', '11');
+      title_preview = title_preview.replaceAll('$min_elo', '1200');
+      title_preview = title_preview.replaceAll('$avg_elo', '1500');
+      title_preview = title_preview.replaceAll('$max_elo', '1800');
+      title_preview = title_preview.replaceAll('$elo', '1500');
+      title_preview = title_preview.replaceAll('$min_pp', '100');
+      title_preview = title_preview.replaceAll('$avg_pp', '150');
+      title_preview = title_preview.replaceAll('$max_pp', '200');
+      title_preview = title_preview.replaceAll('$pp', '150');
+      title_preview = title_preview.replaceAll('$stars', '0-11');
+      title_preview = title_preview.replaceAll('$division', 'Platinum++');
+
+      title_preview = title_preview.substring(0, 50);
+      document.querySelector('.preview').innerText = title_preview;
     });
 
-    document.querySelector('main input[name="auto-star-rating"]').addEventListener('click', () => {
-      const range = document.querySelector('main .star-rating-range');
-      range.hidden = !range.hidden;
+    document.querySelectorAll('main input[name="map-selection-type"]').forEach((radio) => radio.addEventListener('click', function() {
+      const mod_settings = document.querySelector('.mod-settings');
+
+      if (this.value == 'elo') {
+        const mods = mod_settings.querySelectorAll('.mod-btn');
+        for (const mod of mods) {
+          mod.classList.remove('mod-btn-selected');
+        }
+
+        mod_settings.classList.add('hidden');
+      } else {
+        mod_settings.classList.remove('hidden');
+      }
+    }));
+
+    document.querySelectorAll('.filter').forEach((filter) => {
+      filter.querySelector('input[type="checkbox"]').addEventListener('change', function() {
+        const fieldset = filter.querySelector('fieldset');
+        fieldset.disabled = !fieldset.disabled;
+      });
     });
+
+    // Click to toggle collapse
+    document.querySelectorAll('.collapser').forEach((collapser) => {
+      collapser.parentElement.addEventListener('click', () => {
+        collapser.classList.toggle('rotated');
+        collapser.parentElement.nextElementSibling.classList.toggle('hidden');
+      });
+    });
+
+    // Circle size does not apply for taiko/manio
+    if (selected_ruleset == 1 || selected_ruleset == 3) {
+      document.querySelector('#cs_filter').parentElement.parentElement.classList.add('hidden');
+    }
+
+    // Mania-specific mods
+    if (selected_ruleset == 3) {
+      document.querySelector('.mr').classList.remove('hidden');
+      document.querySelector('.co').classList.remove('hidden');
+      document.querySelector('.fi').classList.remove('hidden');
+
+      document.querySelector('.mania-keycount-settings').classList.remove('hidden');
+      document.querySelectorAll('.mania-keycount-settings .mod-btn').forEach((btn) => btn.addEventListener('click', function() {
+        this.classList.toggle('mod-btn-selected');
+      }));
+    }
+
+    document.querySelectorAll('.mod-settings .mod-btn').forEach((btn) => btn.addEventListener('click', function() {
+      const NM = document.querySelector('.nm');
+      const DT = document.querySelector('.dt');
+      const NC = document.querySelector('.nc');
+      const HT = document.querySelector('.ht');
+      const EZ = document.querySelector('.ez');
+      const HR = document.querySelector('.hr');
+
+      const mod = this.querySelector('div').innerText;
+      this.classList.toggle('mod-btn-selected');
+      let selected = this.classList.contains('mod-btn-selected');
+
+      if (mod != 'NM') {
+        NM.classList.remove('mod-btn-selected');
+      }
+      if (mod == 'NM' && selected) {
+        document.querySelectorAll('.mod-settings .mod-btn').forEach((btn) => btn.classList.remove('mod-btn-selected'));
+        DT.classList.remove('hidden');
+        NC.classList.add('hidden');
+        this.classList.add('mod-btn-selected');
+      }
+
+      if (mod == 'DT' && !selected) {
+        DT.classList.toggle('hidden');
+        NC.classList.toggle('hidden');
+        NC.classList.add('mod-btn-selected');
+        selected = true;
+      }
+      if (mod == 'NC') {
+        DT.classList.toggle('hidden');
+        NC.classList.toggle('hidden');
+      }
+
+      if (selected && (mod == 'DT' || mod == 'NC')) {
+        HT.classList.remove('mod-btn-selected');
+      }
+      if (selected && mod == 'HT') {
+        DT.classList.remove('mod-btn-selected');
+        DT.classList.remove('hidden');
+        NC.classList.remove('mod-btn-selected');
+        NC.classList.add('hidden');
+      }
+
+      if (selected && mod == 'EZ') {
+        HR.classList.remove('mod-btn-selected');
+      }
+      if (selected && mod == 'HR') {
+        EZ.classList.remove('mod-btn-selected');
+      }
+    }));
 
     document.querySelector('main .go-back-btn').addEventListener('click', (evt) => {
       evt.preventDefault();
@@ -387,20 +493,47 @@ async function route(new_url) {
       document.querySelector('main .lobby-creation-need-ref').hidden = true;
       document.querySelector('main .lobby-creation-spinner').hidden = false;
 
-      const lobby_type = document.querySelector('input[name="lobby-type"]:checked').value;
       try {
         const lobby_settings = {
-          type: lobby_type,
           ruleset: selected_ruleset,
-          star_rating: document.querySelector('main input[name="auto-star-rating"]').checked ? 'auto' : 'fixed',
-          min_stars: parseFloat(document.querySelector('main input[name="min-stars"]').value),
-          max_stars: parseFloat(document.querySelector('main input[name="max-stars"]').value),
           title: document.querySelector('input[name="title"]').value,
+          map_selection_algo: document.querySelector('main input[name="map-selection-type"]:checked').value,
+          map_pool: document.querySelector('main input[name="map-pool"]:checked').value,
+          collection_id: null,
+          mod_list: [],
+          filters: [],
+          key_count: [],
         };
-        const collection_input = document.querySelector('main input[name="collection-url"]');
-        if (collection_input.value) {
+
+        if (lobby_settings.map_pool == 'collection') {
+          const collection_input = document.querySelector('main input[name="collection-url"]');
           lobby_settings.collection_id = parseInt(collection_input.value.split('/').reverse()[0], 10);
         }
+
+        const selected_mods = document.querySelectorAll('.mod-settings .mod-btn-selected');
+        for (const mod of selected_mods) {
+          lobby_settings.mod_list.push(mod.innerText.trim());
+        }
+
+        const filters = document.querySelectorAll('.filter');
+        for (const filter of filters) {
+          const checkbox = filter.querySelector('input[type="checkbox"]');
+          if (!checkbox.checked) continue;
+
+          const name = checkbox.id.substring(0, checkbox.id.indexOf('_filter'));
+          const min = document.querySelector(`input[name="min_${name}"]`).value;
+          const max = document.querySelector(`input[name="max_${name}"]`).value;
+          lobby_settings.filters.push({name, min, max});
+        }
+
+        if (selected_ruleset == 3) {
+          const selected_keys = document.querySelectorAll('.mania-keycount-settings .mod-btn');
+          for (const key of selected_keys) {
+            lobby_settings.key_count.push(parseInt(key.innerText, 10));
+          }
+        }
+
+        // Input shown if bot can't create any more lobbies and needs a user-made lobby
         const match_input = document.querySelector('main input[name="tournament-url"]');
         if (match_input.value) {
           lobby_settings.match_id = parseInt(match_input.value.split('/').reverse()[0], 10);
@@ -429,7 +562,7 @@ async function route(new_url) {
         document.querySelector('.lobby-creation-spinner').hidden = true;
         document.querySelector('.lobby-creation-success .lobby').outerHTML = render_lobby(json_res.lobby).outerHTML;
 
-        const info_template = document.querySelector(lobby_type == 'ranked' ? '#ranked-command-list-template' : '#unranked-command-list-template').content.cloneNode(true);
+        const info_template = document.querySelector('#command-list-template').content.cloneNode(true);
         document.querySelector('.lobby-creation-success .info').appendChild(info_template);
         document.querySelector('.lobby-creation-success').hidden = false;
       } catch (err) {

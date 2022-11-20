@@ -1,22 +1,58 @@
+import fetch from 'node-fetch';
+
 import {osu_fetch} from './api.js';
 import bancho from './bancho.js';
 import db from './database.js';
-import {save_game_and_update_rating, get_map_rank} from './glicko.js';
+import {save_game_and_update_rating, get_map_rank, get_division_from_elo} from './glicko.js';
 import Config from './util/config.js';
 import {capture_sentry_exception} from './util/helpers.js';
 
 
 async function set_new_title(lobby) {
-  let new_title = '';
+  let new_title = lobby.data.title;
 
-  const gamemodes = ['std', 'taiko', 'catch', 'mania 4k'];
-  const ruleset = gamemodes[lobby.data.ruleset];
-
-  if (lobby.avg_stars) {
-    new_title = `${lobby.avg_stars.toFixed(1)}* | o!RL ${ruleset} (!info)`;
+  // Min stars: we prefer not displaying the decimals whenever possible
+  let fancy_min_stars;
+  if (Math.abs(lobby.data.min_stars - Math.round(lobby.data.min_stars)) <= 0.1) {
+    fancy_min_stars = Math.round(lobby.data.min_stars);
   } else {
-    new_title = `o!RL ${ruleset} (!info)`;
+    fancy_min_stars = Math.round(lobby.data.min_stars * 100) / 100;
   }
+
+  // Max stars: we prefer displaying .99 whenever possible
+  let fancy_max_stars;
+  if (lobby.data.max_stars > 11) {
+    // ...unless it's a ridiculously big number
+    fancy_max_stars = Math.round(lobby.data.max_stars);
+  } else {
+    if (Math.abs(lobby.data.max_stars - Math.round(lobby.data.max_stars)) <= 0.1) {
+      fancy_max_stars = (Math.round(lobby.data.max_stars) - 0.01).toFixed(2);
+    } else {
+      fancy_max_stars = Math.round(lobby.data.max_stars * 100) / 100;
+    }
+  }
+
+  let stars;
+  if (lobby.data.max_stars - lobby.data.min_stars == 1 && lobby.data.min_stars % 1 == 0) {
+    // Simplify "4-4.99*" lobbies as "4*"
+    stars = `${lobby.data.min_stars}`;
+  } else {
+    stars = `${fancy_min_stars}-${fancy_max_stars}`;
+  }
+
+  new_title.replaceAll('$min_stars', fancy_min_stars);
+  new_title.replaceAll('$avg_stars', Math.round(lobby.data.avg_stars * 10) / 10);
+  new_title.replaceAll('$max_stars', fancy_max_stars);
+  new_title.replaceAll('$min_elo', Math.round(lobby.data.min_elo));
+  new_title.replaceAll('$avg_elo', Math.round(lobby.data.avg_elo));
+  new_title.replaceAll('$max_elo', Math.round(lobby.data.max_elo));
+  new_title.replaceAll('$elo', Math.round(lobby.data.avg_elo));
+  new_title.replaceAll('$min_pp', Math.round(lobby.data.min_pp));
+  new_title.replaceAll('$avg_pp', Math.round(lobby.data.avg_pp));
+  new_title.replaceAll('$max_pp', Math.round(lobby.data.max_pp));
+  new_title.replaceAll('$pp', Math.round(lobby.data.avg_pp));
+  new_title.replaceAll('$stars', stars);
+  new_title.replaceAll('$division', get_division_from_elo(lobby.data.avg_elo, lobby.data.ruleset));
 
   if (!Config.IS_PRODUCTION) {
     new_title = 'test lobby';
@@ -28,101 +64,135 @@ async function set_new_title(lobby) {
   }
 }
 
-function update_median_mu(lobby) {
-  if (lobby.players.length == 0) {
-    lobby.median_pp = 0;
-    lobby.avg_stars = 0;
-    return;
+
+// Updates the map selection query to account for lobby's current elo/pp.
+// Also updates min/avg/max elo/pp/star values for use in lobby title.
+function update_map_selection_query(lobby) {
+  let median_pp = 0;
+  let median_elo = 1500;
+  if (lobby.players.length > 0) {
+    const pps = [];
+    const elos = [];
+    for (const player of lobby.players) {
+      pps.push(Math.min(600, player.pps[lobby.data.ruleset]));
+      elos.push(player.ratings[lobby.data.ruleset].elo);
+    }
+
+    const middle = Math.floor(pps.length / 2);
+    if (pps.length % 2 == 0) {
+      median_pp = (pps[middle - 1] + pps[middle]) / 2;
+      median_elo = (elos[middle - 1] + elos[middle]) / 2;
+    } else {
+      median_pp = pps[middle];
+      median_elo = elos[middle];
+    }
   }
 
-  const pps = [];
-  for (const player of lobby.players) {
-    pps.push(Math.min(600, player.pps[lobby.data.ruleset]));
-  }
+  const get_query = (type) => {
+    if (type == 'random') {
+      return {
+        query: `SELECT * FROM pool_${lobby.id} pool
+                INNER JOIN pp ON pp.map_id = pool.map_id
+                INNER JOIN rating ON pool.rating_id = rating.rowid
+                WHERE ${lobby.data.filter_query} AND mods = ?`,
+        args: [lobby.data.mods],
+      };
+    }
+    if (type == 'pp') {
+      return {
+        query: `SELECT *, ABS(? - pp) AS pick_accuracy FROM pool_${lobby.id} pool
+                INNER JOIN pp ON pp.map_id = pool.map_id
+                INNER JOIN rating ON pool.rating_id = rating.rowid
+                WHERE ${lobby.data.filter_query} AND mods = ?
+                ORDER BY pick_accuracy ASC LIMIT ?`,
+        args: [median_pp, lobby.data.mods, lobby.data.pp_closeness],
+      };
+    }
+    if (type == 'elo') {
+      return {
+        query: `SELECT *, ABS(? - elo) AS pick_accuracy FROM pool_${lobby.id} pool
+                INNER JOIN pp ON pp.map_id = pool.map_id
+                INNER JOIN rating ON pool.rating_id = rating.rowid
+                WHERE ${lobby.data.filter_query} AND mods = ?
+                ORDER BY pick_accuracy ASC LIMIT ?`,
+        args: [median_elo, lobby.data.mods, lobby.data.elo_closeness],
+      };
+    }
 
-  const middle = Math.floor(pps.length / 2);
-  if (pps.length % 2 == 0) {
-    lobby.median_pp = (pps[middle - 1] + pps[middle]) / 2;
-  } else {
-    lobby.median_pp = pps[middle];
-  }
+    throw new Error('Unknown map selection type');
+  };
 
-  lobby.avg_stars = db.prepare(`
-    SELECT AVG(stars) AS avg_stars FROM (
-      SELECT *, ABS(? - pp) AS pick_accuracy FROM map
-      WHERE stars >= ? AND stars <= ? AND (ranked = 4 OR season2 > 0)
-        AND dmca = 0 AND mode = ?
-        ${lobby.extra_filters}
-      ORDER BY pick_accuracy ASC LIMIT ?
-    )`,
-  ).get(
-      lobby.median_pp,
-      lobby.data.min_stars, lobby.data.max_stars,
-      lobby.data.ruleset,
-      Config.map_bucket_size,
-  ).avg_stars;
+  lobby.map_query = get_query(lobby.data.map_selection_algo);
+
+  const query_stats = db.prepare(
+      `SELECT AVG(stars) AS avg_stars,
+            MIN(pp) AS min_elo, AVG(elo) AS avg_elo, MAX(elo) AS max_elo,
+            MIN(pp) AS min_pp, AVG(pp) AS avg_pp, MAX(pp) AS max_pp
+    FROM (${lobby.map_query.query})`,
+  ).get(...lobby.map_query.args);
+  lobby.data.avg_stars = query_stats.avg_stars;
+  lobby.data.min_elo = query_stats.min_elo;
+  lobby.data.avg_elo = query_stats.avg_elo;
+  lobby.data.max_elo = query_stats.max_elo;
+  lobby.data.min_pp = query_stats.min_pp;
+  lobby.data.avg_pp = query_stats.avg_pp;
+  lobby.data.max_pp = query_stats.max_pp;
 }
-
 
 async function select_next_map() {
   clearTimeout(this.countdown);
   this.countdown = -1;
 
-  if (this.data.recent_maps.length >= Config.map_bucket_size) {
-    this.data.recent_maps.shift();
+  if (!this.data.recent_mapsets) this.data.recent_mapsets = [];
+  if (!this.data.nb_non_repeating) this.data.nb_non_repeating = 25;
+  if (this.data.recent_mapsets.length >= this.data.nb_non_repeating) {
+    this.data.recent_mapsets.shift();
   }
 
-  if (!this.median_pp) {
-    update_median_mu(this);
-  }
-  const select_map = () => {
-    return db.prepare(`
-      SELECT * FROM (
-        SELECT *, ABS(? - pp) AS pick_accuracy FROM map
-        WHERE stars >= ? AND stars <= ? AND (ranked = 4 OR season2 > 0)
-          AND dmca = 0 AND mode = ?
-          ${this.extra_filters}
-        ORDER BY pick_accuracy ASC LIMIT ?
-      ) ORDER BY RANDOM() LIMIT 1`,
-    ).get(
-        this.median_pp,
-        this.data.min_stars, this.data.max_stars,
-        this.data.ruleset,
-        Config.map_bucket_size,
-    );
-  };
+  update_map_selection_query(this);
 
   let new_map = null;
   for (let i = 0; i < 10; i++) {
-    new_map = select_map();
+    new_map = db.prepare(`
+      SELECT * FROM (${this.map_query.query})
+      ORDER BY RANDOM() LIMIT 1`,
+    ).get(...this.map_query.args);
     if (!new_map) break;
-
-    if (!this.data.recent_maps.includes(new_map.map_id)) {
+    if (!this.data.recent_mapsets.includes(new_map.set_id)) {
       break;
     }
   }
-
   if (!new_map) {
-    await this.send(`Couldn't find a map in the ${this.data.min_stars}-${this.data.max_stars} range. :/`);
+    await this.send(`Couldn't find a map with the current lobby settings :/`);
     return;
   }
 
-  this.data.recent_maps.push(new_map.map_id);
+  this.data.recent_mapsets.push(new_map.set_id);
   const map_rank = get_map_rank(new_map.map_id);
   let map_elo = '';
   if (map_rank.nb_scores >= 5) {
     map_elo = ` ${Math.round(map_rank.elo)} elo,`;
   }
 
+  const MAP_TYPES = {
+    1: 'graveyarded',
+    2: 'wip',
+    3: 'pending',
+    4: 'ranked',
+    5: 'approved',
+    6: 'qualified',
+    7: 'loved',
+  };
+
   try {
     const sr = new_map.stars;
-    const flavor = `${sr.toFixed(2)}*,${map_elo} ${Math.round(new_map.pp)}pp`;
+    const flavor = `${MAP_TYPES[new_map.ranked]} ${sr.toFixed(2)}*,${map_elo} ${Math.round(new_map.pp)}pp`;
     const map_name = `[https://osu.ppy.sh/beatmaps/${new_map.map_id} ${new_map.name}]`;
     const beatconnect_link = `[https://beatconnect.io/b/${new_map.set_id} [1]]`;
     const chimu_link = `[https://chimu.moe/d/${new_map.set_id} [2]]`;
     const nerina_link = `[https://api.nerinyan.moe/d/${new_map.set_id} [3]]`;
     const sayobot_link = `[https://osu.sayobot.cn/osu.php?s=${new_map.set_id} [4]]`;
-    await this.send(`!mp map ${new_map.map_id} ${this.data.ruleset} | ${map_name} (${flavor}) Alternate downloads: ${beatconnect_link} ${chimu_link} ${nerina_link} ${sayobot_link}`);
+    await this.send(`!mp map ${new_map.map_id} ${new_map.mode} | ${map_name} (${flavor}) Alternate downloads: ${beatconnect_link} ${chimu_link} ${nerina_link} ${sayobot_link}`);
     this.map = new_map;
     await set_new_title(this);
   } catch (e) {
@@ -131,31 +201,111 @@ async function select_next_map() {
 }
 
 
+function generate_map_pool_table(lobby) {
+  // Vary map attributes based on selected mods
+  let ar = 1.0;
+  let cs = 1.0;
+  let od = 1.0;
+  let hp = 1.0;
+  let bpm = 1.0;
+  let length = 1.0;
+  if (lobby.data.mods & (1 << 1)) {
+    // EZ
+    ar /= 2;
+    cs /= 2;
+    hp /= 2;
+    od /= 2;
+  } else if (lobby.data.mods & (1 << 4)) {
+    // HR
+    ar *= 1.4;
+    if (ar > 10) ar = 10;
+    cs *= 1.3;
+    hp *= 1.4;
+    od *= 1.4;
+  }
+  if (lobby.data.mods & (1 << 6)) {
+    // DT
+    bpm *= 1.5;
+    length *= 0.66;
+  } else if (lobby.data.mods & (1 << 8)) {
+    // HT
+    bpm *= 0.75;
+    length *= 1.33;
+  }
+
+  if (lobby.data.map_pool == 'leaderboarded') {
+    db.prepare(`
+    CREATE TEMPORARY TABLE pool_${lobby.id} AS 
+    SELECT map_id, set_id, mode, name, ar * ${ar} AS ar, cs * ${cs} AS cs, hp * ${hp} AS hp, od * ${od} AS od,
+           bpm * ${bpm} AS bpm, length * ${length} AS length, rating_id, ranked FROM map
+    WHERE ranked >= 3 AND dmca = 0 AND mode = ?
+    `).run(lobby.data.ruleset);
+  } else {
+    db.prepare(`CREATE TEMPORARY TABLE pool_${lobby.id} (map_id, set_id, mode, name, ar, cs, hp, od, bpm, length, rating_id, ranked)`).run();
+
+    const insert_map = db.prepare(`
+      INSERT INTO pool_${lobby.id} (map_id, set_id, mode, name, ar, cs, hp, od, bpm, length, rating_id, ranked)
+      SELECT map_id, set_id, mode, name, ar * ${ar}, cs * ${cs}, hp * ${hp}, od * ${od}, bpm * ${bpm}, length * ${length}, rating_id, ranked
+      FROM map WHERE map_id = ?`,
+    );
+    for (const mapset of lobby.data.collection.beatmapsets) {
+      for (const map of mapset.beatmaps) {
+        insert_map.run(map.id);
+      }
+    }
+  }
+}
+
+
 async function init_lobby(lobby) {
-  if (!lobby.data.ruleset) lobby.data.ruleset = 0;
-  if (!lobby.data.recent_maps) lobby.data.recent_maps = [];
-  if (!lobby.data.min_stars) lobby.data.min_stars = 3;
+  // Defaults for old lobbies
+  if (!lobby.data.min_stars) lobby.data.min_stars = 0;
   if (!lobby.data.max_stars) lobby.data.max_stars = 11;
+  if (!lobby.data.ruleset) lobby.data.ruleset = 0;
+  if (!lobby.data.map_selection_algo) lobby.data.map_selection_algo = 'pp';
+  if (!lobby.data.map_pool) lobby.data.map_pool = 'leaderboarded';
+  if (!lobby.data.mods) lobby.data.mods = 0;
+  if (!lobby.data.mod_list) lobby.data.mod_list = [];
+  if (!lobby.data.filter_query) {
+    if (lobby.data.ruleset == 3) {
+      lobby.data.filter_query = 'cs = 4';
+    } else {
+      lobby.data.filter_query = 1;
+    }
+  }
+  if (!lobby.data.nb_non_repeating) lobby.data.nb_non_repeating = 100;
+  if (! lobby.data.pp_closeness) lobby.data.pp_closeness = 50;
+  if (!lobby.data.elo_closeness) lobby.data.elo_closeness = 100;
+  if (!lobby.data.title) lobby.data.title = '$stars* | o!RL (!info)';
 
   lobby.match_participants = [];
 
   lobby.votekicks = [];
   lobby.countdown = -1;
   lobby.select_next_map = select_next_map;
-  lobby.data.type = 'ranked';
   lobby.match_end_timeout = -1;
-  lobby.extra_filters = '';
 
-  // Mania is only 4K for now
-  if (lobby.data.ruleset == 3) {
-    lobby.extra_filters = ' AND cs = 4';
+  if (lobby.data.collection_id && !lobby.data.collection) {
+    try {
+      const res = await fetch(`https://osucollector.com/api/collections/${lobby.data.collection_id}`);
+      if (res.status == 404) {
+        throw new Error('Collection not found.');
+      }
+      if (!res.ok) {
+        throw new Error(await res.text());
+      }
+
+      lobby.data.collection = await res.json();
+    } catch (err) {
+      await lobby.send(`Failed to load collection: ${err.message}`);
+      throw err;
+    }
   }
 
-  lobby.on('password', async () => {
-    // Ranked lobbies never should have a password
-    if (lobby.passworded) {
-      await lobby.send('!mp password');
-    }
+  // generate_map_pool_table() must be called after fetching lobby.data.collection!
+  generate_map_pool_table(lobby);
+  lobby.on('close', () => {
+    db.prepare(`DROP TABLE temp.pool_${lobby.id}`).run();
   });
 
   lobby.on('settings', async () => {
@@ -165,8 +315,6 @@ async function init_lobby(lobby) {
       }
     }
 
-    update_median_mu(lobby);
-
     // Cannot select a map until we fetched the player IDs via !mp settings.
     if (lobby.created_just_now) {
       await lobby.select_next_map();
@@ -175,14 +323,12 @@ async function init_lobby(lobby) {
   });
 
   lobby.on('playerJoined', async (player) => {
-    update_median_mu(lobby);
     if (lobby.players.length == 1) {
       await lobby.select_next_map();
     }
   });
 
   lobby.on('playerLeft', async (player) => {
-    update_median_mu(lobby);
     if (lobby.players.length == 0) {
       await set_new_title(lobby);
     }
@@ -282,7 +428,14 @@ async function init_lobby(lobby) {
     await lobby.send(`!mp settings ${Math.random().toString(36).substring(2, 6)}`);
     await lobby.send('!mp clearhost');
     await lobby.send('!mp password');
-    await lobby.send('!mp mods freemod');
+
+    if (lobby.data.mods == 'none') {
+      await lobby.send('!mp mods none');
+    } else if (lobby.data.mods == 0) {
+      await lobby.send('!mp mods freemod');
+    } else {
+      await lobby.send(`!mp mods ${lobby.data.mod_list.join(' ')}`);
+    }
 
     // Lobbies are ScoreV1 - but we ignore the results and get the full score info from osu's API.
     await lobby.send(`!mp set 0 0 16`);

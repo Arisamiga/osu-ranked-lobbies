@@ -8,6 +8,10 @@
         font-family: "Segoe UI", sans-serif;
     }
 
+    input {
+        @apply text-zinc-900;
+    }
+
     h1 {
         @apply text-4xl;
     }
@@ -73,6 +77,11 @@
         background-clip: text;
     }
 
+    .mono {
+        @apply bg-zinc-700;
+        font-family: monospace;
+    }
+
     .tooltip {
         @apply absolute hidden group-hover:inline-block p-2 z-50 bg-orange-600 text-center text-white text-sm font-bold;
         left: 2.5rem;
@@ -92,6 +101,27 @@
         border: 7px solid transparent;
         border-left: none;
         border-right-color: #ea580c;
+    }
+
+    .collapser {
+        margin: 0.6rem;
+        display: inline-block;
+        width: 0;
+        height: 0;
+        border-top: 10px solid transparent;
+        border-bottom: 10px solid transparent;
+        border-left: 10px solid #737373;
+    }
+    .rotated {
+        transform: rotate(90deg);
+    }
+
+    .mod-btn {
+        @apply inline-block text-center w-16 border-2 border-orange-600 hover:bg-zinc-700 rounded-md p-2 m-1 cursor-pointer select-none;
+    }
+
+    .mod-btn-selected {
+        @apply bg-zinc-700 hover:bg-zinc-600;
     }
 
     .default-btn {

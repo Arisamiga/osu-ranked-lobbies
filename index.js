@@ -6,8 +6,7 @@ import db from './database.js';
 import {init as init_discord_interactions} from './discord_interactions.js';
 import {init as init_discord_updates} from './discord_updates.js';
 import {listen as website_listen} from './website.js';
-import {init_lobby as init_ranked_lobby} from './ranked.js';
-import {init_lobby as init_collection_lobby} from './collection.js';
+import {init_lobby} from './ranked.js';
 import Config from './util/config.js';
 import {capture_sentry_exception} from './util/helpers.js';
 
@@ -18,11 +17,7 @@ async function rejoin_lobbies() {
 
     try {
       const bancho_lobby = await bancho.join('#mp_' + match.match_id);
-      if (bancho_lobby.data.type == 'ranked') {
-        await init_ranked_lobby(bancho_lobby);
-      } else if (bancho_lobby.data.type == 'collection') {
-        await init_collection_lobby(bancho_lobby);
-      }
+      await init_lobby(bancho_lobby);
     } catch (err) {
       console.error(`Failed to rejoin lobby #${match.match_id}: ${err}`);
       db.prepare(`UPDATE match SET end_time = ? WHERE match_id = ?`).run(Date.now(), match.match_id);

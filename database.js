@@ -3,7 +3,8 @@ import Database from 'better-sqlite3';
 
 const db = new Database('orl.db');
 db.pragma('foreign_keys = ON');
-db.pragma('JOURNAL_MODE = WAL');
+db.pragma('journal_mode = WAL');
+db.pragma('temp_store = MEMORY');
 
 
 db.exec(`
@@ -38,13 +39,6 @@ db.exec(`
     mode          INTEGER NOT NULL,           -- (0 = std, 1 = taiko, 2 = ctb, 3 = mania)
     stars         REAL    NOT NULL,
     pp            REAL    NOT NULL,
-    pp_aim        REAL,                       -- null for taiko, ctb, mania
-    pp_acc        REAL,                       -- null for ctb
-    pp_fl         REAL,                       -- null for taiko, ctb, mania
-    pp_speed      REAL,                       -- null for taiko, ctb, mania
-    pp_strain     REAL,                       -- null for std, ctb
-    strain_aim    REAL,                       -- null for taiko, ctb, mania
-    strain_speed  REAL,                       -- null for taiko, ctb, mania
     ar            REAL    NOT NULL,
     cs            REAL    NOT NULL,
     hp            REAL    NOT NULL,
@@ -62,6 +56,15 @@ db.exec(`
     season2       INTEGER NOT NULL DEFAULT 0,  -- is it part of the S2 map pool?
 
     FOREIGN KEY(rating_id) REFERENCES rating(rowid)
+  );
+
+  CREATE TABLE IF NOT EXISTS pp (
+    map_id INTEGER NOT NULL,
+    mods   INTEGER NOT NULL,
+    stars  REAL    NOT NULL,
+    pp     REAL    NOT NULL,
+
+    FOREIGN KEY(map_id) REFERENCES map(map_id)
   );
 
 
@@ -107,7 +110,7 @@ db.exec(`
     match_id   INTEGER PRIMARY KEY,
     invite_id  INTEGER,
     name       TEXT,
-    data       TEXT    NOT NULL DEFAULT '{"type":"new"}',
+    data       TEXT    NOT NULL DEFAULT '{}',
     start_time INTEGER NOT NULL,
     end_time   INTEGER
   );

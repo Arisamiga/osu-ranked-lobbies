@@ -61,7 +61,6 @@ async function _get_map_info(map_id, api_res) {
   const calc = new Calculator();
   const attrs = calc.mapAttributes(rosu_map);
   const perf = calc.performance(rosu_map);
-  const strains = calc.strains(rosu_map);
   let approx_mu = (perf.difficulty.stars * 325 - 1500) / 173.7178; // 4.6* ~= 1500 elo (patented algorithm)
   if (approx_mu < 0) approx_mu = 0;
   if (approx_mu > 3000) approx_mu = 3000;
@@ -79,15 +78,68 @@ async function _get_map_info(map_id, api_res) {
   ).get(api_res.mode_int + 4, approx_mu, approx_mu);
   db.prepare(`
     INSERT INTO map (
-      map_id, name, mode, stars, pp, pp_aim, pp_acc, pp_fl, pp_speed, pp_strain,
-      ar, cs, hp, od, bpm, set_id, length, ranked, dmca, rating_id
+      map_id, name, mode, ar, cs, hp, od, bpm, set_id, length, ranked, dmca, rating_id
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).run(
-      map_id, api_res.beatmapset.title, api_res.mode_int, perf.difficulty.stars, perf.pp, perf.ppAim,
-      perf.ppAcc, perf.ppFlashlight, perf.ppSpeed, perf.ppDifficulty,
+      map_id, api_res.beatmapset.title, api_res.mode_int,
       attrs.ar, attrs.cs, attrs.hp, attrs.od, attrs.bpm,
       api_res.beatmapset.id, api_res.total_length, api_res.beatmapset.ranked,
       api_res.beatmapset.availability.download_disabled ? 1 : 0, rating.rowid,
   );
+
+  // 5. Process all mod combinations
+  console.info('Computing pp for map ', map_id);
+  const compute_and_insert = (mods) => {
+    const calc = new Calculator({mods});
+    const perf = calc.performance(rosu_map);
+    db.prepare(
+        `INSERT INTO pp (map_id, mods, stars, pp) VALUES (?, ?, ?, ?)`,
+    ).run(
+        map_id, mods, perf.difficulty.stars, perf.pp,
+    );
+  };
+  const nm = 1 << 0;
+  const ez = 1 << 1;
+  const hd = 1 << 3;
+  const hr = 1 << 4;
+  const dt = 1 << 6;
+  const ht = 1 << 8;
+  const fl = 1 << 10;
+  compute_and_insert(nm);
+  compute_and_insert(hd);
+  compute_and_insert(hr);
+  compute_and_insert(dt);
+  compute_and_insert(fl);
+  compute_and_insert(ez);
+  compute_and_insert(ht);
+  compute_and_insert(hd | hr);
+  compute_and_insert(hd | dt);
+  compute_and_insert(hd | fl);
+  compute_and_insert(hr | dt);
+  compute_and_insert(hr | fl);
+  compute_and_insert(dt | fl);
+  compute_and_insert(hd | ez);
+  compute_and_insert(hd | ht);
+  compute_and_insert(ez | ht);
+  compute_and_insert(ez | fl);
+  compute_and_insert(ht | fl);
+  compute_and_insert(ez | dt);
+  compute_and_insert(hr | ht);
+  compute_and_insert(hd | hr | dt);
+  compute_and_insert(hd | hr | fl);
+  compute_and_insert(hd | dt | fl);
+  compute_and_insert(hr | dt | fl);
+  compute_and_insert(hd | ez | ht);
+  compute_and_insert(hd | ez | fl);
+  compute_and_insert(hd | ht | fl);
+  compute_and_insert(ez | ht | fl);
+  compute_and_insert(hd | ez | dt);
+  compute_and_insert(ez | dt | fl);
+  compute_and_insert(hd | hr | ht);
+  compute_and_insert(hr | ht | fl);
+  compute_and_insert(hd | hr | dt | fl);
+  compute_and_insert(hd | ez | ht | fl);
+  compute_and_insert(hd | ez | dt | fl);
+  compute_and_insert(hd | hr | ht | fl);
 
   return await get_map_info(map_id);
 }
