@@ -251,7 +251,7 @@ const commands = [
     regex: /^!close$/i,
     handler: close_command,
     creator_only: true,
-    modes: ['collection', 'ranked'],
+    modes: ['lobby'],
   },
   {
     regex: /^!start$/i,
