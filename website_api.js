@@ -386,6 +386,7 @@ async function register_routes(app) {
       lobby.data.creator = user.username;
       lobby.data.creator_id = req.user_id;
       lobby.data.ruleset = req.body.ruleset;
+      lobby.data.title = req.body.title;
       lobby.data.map_selection_algo = req.body.map_selection_algo;
       lobby.data.map_pool = req.body.map_pool;
       if (lobby.data.map_pool == 'collection') {
