@@ -14,7 +14,7 @@ import bancho from './bancho.js';
 import db from './database.js';
 import {get_user_ranks} from './glicko.js';
 import {init_lobby} from './ranked.js';
-
+import {osu_fetch} from './api.js';
 
 const USER_NOT_FOUND = new Error('User not found. Have you played a game in a ranked lobby yet?');
 USER_NOT_FOUND.http_code = 404;
@@ -338,6 +338,45 @@ async function register_routes(app) {
     http_res.json(lobbies);
   });
 
+  app.get('/api/lobbies/:lobbyid', async (req, http_res) => {
+    const lobbyid = parseInt(req.params.lobbyid, 10);
+    const lobby = bancho.joined_lobbies.find((l) => l.id === lobbyid);
+    if (!lobby) {
+      http_res.status(404).json({error: 'Lobby not found'});
+      return;
+    }
+    const past_beatmaps = [];
+    const players = [];
+    const match = await osu_fetch('https://osu.ppy.sh/community/matches/' + lobby.id);
+    match.events.forEach((event) => {
+      if (event.game ?? false) {
+        const beatmap = event.game.beatmap;
+        past_beatmaps.push({beatmap_id: beatmap.id, beatmap_title: beatmap.beatmapset.title, beatmap_artist: beatmap.beatmapset.artist, beatmap_version: beatmap.version});
+      }
+    });
+    lobby.players.forEach((player) => {
+      players.push({user_id: player.user_id, username: player.username});
+    });
+    http_res.json({
+      bancho_id: lobby.invite_id,
+      nb_players: players,
+      name: lobby.name,
+      ruleset: lobby.data.ruleset,
+      scorev2: lobby.data.is_scorev2,
+      creator_name: lobby.data.creator,
+      creator_id: lobby.data.creator_id,
+      map: lobby.map,
+      mods: lobby.active_mods,
+      current_beatmap: {name: lobby.beatmap_name, id: lobby.beatmap_id},
+      past_beatmaps: past_beatmaps,
+      mode: lobby.team_mode,
+      win_condition: lobby.win_condition,
+      playing: lobby.playing,
+      min_stars: lobby.data.min_stars,
+      max_stars: lobby.data.max_stars,
+      fixed_stars: lobby.data.fixed_star_range,
+    });
+  });
   app.post('/api/create-lobby/', express.json(), async (req, http_res) => {
     if (!req.user_id) {
       http_res.status(403).json({error: 'You need to be authenticated to create a lobby.'});

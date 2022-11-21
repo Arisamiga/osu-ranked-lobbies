@@ -208,6 +208,54 @@ function render_lobby(lobby) {
   return lobby_div;
 }
 
+function render_lobbyid(lobby) {
+  const lobby_div = document.createElement('div');
+  lobby_div.classList.add('lobby');
+
+  let stars = 'Dynamic';
+  if (lobby.fixed_stars) {
+    stars = `${lobby.min_stars.toFixed(1)}-${lobby.max_stars.toFixed(1)}*`;
+  }
+
+  let players = '';
+  let past_beatmaps = '';
+  for (const player of lobby.nb_players) {
+    if (lobby.nb_players.length > 1) {
+      players += `<a href="/u/${player.user_id}"><img class="h-5 text-bottom rounded-full inline" src="https://s.ppy.sh/a/${player.user_id}" alt="Lobby creator"> ${player.username}</a>, `;
+    } else {
+      players += `<a href="/u/${player.user_id}"><img class="h-5 text-bottom rounded-full inline" src="https://s.ppy.sh/a/${player.user_id}" alt="Lobby creator"> ${player.username}</a>`;
+    }
+  }
+  for (const beatmaps of lobby.past_beatmaps.reverse()) {
+    past_beatmaps += `- <a href="https://osu.ppy.sh/b/${beatmaps.beatmap_id}">${beatmaps.beatmap_artist} - ${beatmaps.beatmap_title} [${beatmaps.beatmap_version}]</a><br> `;
+  }
+  const color = stars_to_color(lobby.map ? lobby.map.stars : 0);
+  lobby_div.className = 'flex flex-1 m-2 rounded-md';
+  lobby_div.style = `border: solid ${color} 2px`;
+  lobby_div.innerHTML += `
+    <div class="lobby-info min-w-[25rem] flex-1 p-2">
+    <div class="lobby-title font-bold"></div>
+      <div>Stars: <b>${stars}</b> <br> Players: ${players}</div>
+      ---
+      <div>Active Mods: <b>${lobby.mods}</b></div>
+      <div>Team Mode: <b>${lobby.mode}</b></div>
+      <div>Win Condition: <b>${lobby.win_condition}</b></div>
+      ---
+      <div style="w:16">Current Beatmap: <b><a href="https://osu.ppy.sh/b/${lobby.current_beatmap.id ?? 0}">${lobby.current_beatmap.name ?? 'Changing Map'}</a></b></div>
+      <div> Past Beatmaps: <br> <b>${past_beatmaps}</b></div>
+      ---
+      <div>Currently:<b> ${lobby.playing ? 'Playing' : 'Waiting'}</b></div>
+      ---
+      <div class="lobby-creator">Created by <a href="/u/${lobby.creator_id}"><img class="h-5 text-bottom rounded-full inline" src="https://s.ppy.sh/a/${lobby.creator_id}" alt="Lobby creator"> ${lobby.creator_name}</a></div>
+      </div>
+    <div class="lobby-links flex flex-col justify-evenly" style="background-color:${color}">
+      <div class="group relative text-center"><a class="!text-white text-2xl p-1.5 pl-2" href="osu://mp/${lobby.bancho_id}"><i class="fa-solid fa-xs fa-arrow-up-right-from-square"></i></a><span class="tooltip top-[-1.3rem]">Join (cutting edge only)</span></div>
+      <div class="group relative text-center"><a class="!text-white text-2xl p-1.5 pl-2" href="/get-invite/${lobby.bancho_id}" target="_blank"><i class="fa-solid fa-xs fa-envelope"></i></a><span class="tooltip top-[-0.1rem]">Get invite</span></div>
+    </div>`;
+  lobby_div.querySelector('.lobby-title').innerText = lobby.name;
+  return lobby_div;
+}
+
 async function render_faq() {
   document.title = 'FAQ - o!RL';
   const template = document.querySelector('#FAQ-template').content.cloneNode(true);
@@ -229,6 +277,31 @@ async function render_lobbies() {
     }
     list.appendChild(render_lobby(lobby));
   }
+
+  document.querySelector('main').appendChild(template);
+  document.querySelector('main .go-to-create-lobby').addEventListener('click', (evt) => {
+    evt.preventDefault();
+    if (user_id == '0') {
+      document.cookie = 'redirect=create-lobby';
+      document.location = '/osu_login';
+    } else {
+      window.history.pushState({}, '', '/create-lobby/');
+      route('/create-lobby/');
+    }
+  });
+}
+
+async function render_idlobby(lobby_id) {
+  document.title = `Lobby (${lobby_id}) - o!RL`;
+  const json = await get('/api/lobbies/' + lobby_id);
+  const template = document.querySelector('#lobbies-template').content.cloneNode(true);
+  const list = template.querySelector('.lobby-list');
+
+  if (json.creator_id == user_id) {
+    template.querySelector('.lobby-creation-banner').hidden = true;
+  }
+
+  list.appendChild(render_lobbyid(json));
 
   document.querySelector('main').appendChild(template);
   document.querySelector('main .go-to-create-lobby').addEventListener('click', (evt) => {
@@ -577,6 +650,10 @@ async function route(new_url) {
   } else if (m = new_url.match(/\/lobbies\//)) {
     document.querySelector('main').innerHTML = '';
     await render_lobbies();
+  } else if (m = new_url.match(/\/lobby\/(\d+)\/?/)) {
+    document.querySelector('main').innerHTML = '';
+    const lobby_id = m[1];
+    await render_idlobby(lobby_id);
   } else if (m = new_url.match(/\/leaderboard\/(\w+)\/(page-(\d+)\/)?/)) {
     const ruleset = m[1];
     update_selected_ruleset(ruleset);
