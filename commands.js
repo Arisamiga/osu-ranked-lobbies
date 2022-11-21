@@ -121,6 +121,7 @@ async function close_command(msg, match, lobby) {
   await lobby.send('Lobby Is closing in 5 seconds.. See you next time!');
   setTimeout(async () => {
     await lobby.send(`!mp close ${Math.random().toString(36).substring(2, 6)}`);
+    lobby.leave();
   }, 5000);
 }
 
