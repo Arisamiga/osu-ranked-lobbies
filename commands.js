@@ -113,6 +113,16 @@ async function abort_command(msg, match, lobby) {
   }
 }
 
+async function close_command(msg, match, lobby) {
+    if (lobby.playing) 
+      await lobby.send(`!mp abort ${Math.random().toString(36).substring(2, 6)}`);
+    
+    await lobby.send("Lobby Is closing in 5 seconds.. See you next time!");
+    setTimeout(async () => {
+      await lobby.send(`!mp close ${Math.random().toString(36).substring(2, 6)}`);
+    }, 5000);
+}
+
 async function ban_command(msg, match, lobby) {
   const bad_player = match[1].trim();
   if (bad_player == '') {
@@ -236,6 +246,12 @@ const commands = [
     handler: abort_command,
     creator_only: false,
     modes: ['lobby'],
+  },
+  {
+    regex: /^!close$/i,
+    handler: close_command,
+    creator_only: true,
+    modes: ['collection', 'ranked'],
   },
   {
     regex: /^!start$/i,
